@@ -1,2 +1,2 @@
-# ictuwp-plugins-eventsmanager-overrides
+# Events manager (overrides)
  Corrections for events manager
