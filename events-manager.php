@@ -677,8 +677,8 @@ function em_locate_template( $template_name, $load=false, $the_args = array() ) 
  * Quick class to dynamically catch wp_options that are EM formats and need replacing with template files.
  * Since the options filter doesn't have a catchall filter, we send all filters to the __call function and figure out the option that way.
  */
-class EM_Formats {
-	function __construct(){ add_action( 'events_manager_loaded', array(&$this, 'add_filters')); }
+class EM_Formats { 
+	function __construct(){ add_action( 'template_redirect', array(&$this, 'add_filters')); }
 	function add_filters(){
 		//you can hook into this filter and activate the format options you want to override by supplying the wp option names in an array, just like in the database.
 		$formats = apply_filters('em_formats_filter', array());
