@@ -1,10 +1,10 @@
 <?php
 /*
-Plugin Name: Events Manager (ICTU WP corrections)
+Plugin Name:    Events Manager (ICTU WP corrections)
 Version: 5.11
 Plugin URI: http://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
-Author: Marcus Sykes (Paul van Buuren)
+Author:    Marcus Sykes (Paul van Buuren)
 Author URI: http://wp-events-plugin.com
 Text Domain: events-manager
 */

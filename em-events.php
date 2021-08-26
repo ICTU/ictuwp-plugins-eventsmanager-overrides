@@ -117,10 +117,6 @@ function em_content($page_content) {
 			}
 			//Now, we either replace CONTENTS or just replace the whole page
 			if( preg_match('/CONTENTS/', $page_content) ){
-				// this str_replace leaves the newline character intact, which
-				// results in the whole content being wrapped in <p></p> tags, which
-				// results in incorrectly structured HTML
-//				$content = str_replace('CONTENTS',$content,$page_content);
 				$content = preg_replace( '/CONTENTS/', $page_content, $content );
 			}
 			if(get_option('dbem_credits')){
