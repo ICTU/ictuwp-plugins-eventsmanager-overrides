@@ -4,9 +4,10 @@
 Based on version: 5.9.11.3
 
 ## Version history
+* 5.11 - corrections
 * 5.10 - corrections
 
-events-manager (line 681): 'template_redirect', not 'events_manager_loaded'
+/events-manager.php (line 681): 'template_redirect', not 'events_manager_loaded'
 function __construct(){ add_action( 'template_redirect', array(&$this, 'add_filters')); }
 
 em-events.php (line 123): Use preg_replace
