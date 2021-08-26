@@ -19,7 +19,7 @@ These files contain bespoke functionality.
 
 
 ### /em-events.php (line 123)
-/em-events.php (line 123): Use preg_replace, instead of str_replace. This prevents a <p> tag wrapping 
+/em-events.php (line 123): Use preg_replace, instead of str_replace. This prevents a `<p>` tag wrapping 
 all of the $content
 
 `//				$content = str_replace('CONTENTS',$content,$page_content);
