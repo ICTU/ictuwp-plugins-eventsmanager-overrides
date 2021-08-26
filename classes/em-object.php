@@ -231,7 +231,7 @@ class EM_Object {
 		$tag = $args['tag'];// - not used anymore, accesses the $args directly
 		$location = $args['location'];
 		$bookings = $args['rsvp'];
-		$bookings = !empty($args['bookings']) ? $args['bookings']:$bookings;
+		$bookings = $args['bookings'] !== false ? absint($args['bookings']):$bookings;
 		$owner = $args['owner'];
 		$event = $args['event'];
 		$month = $args['month'];
@@ -378,9 +378,15 @@ class EM_Object {
 				if( !get_option('dbem_events_current_are_past') ){
 					$conditions['scope'] .= " OR (event_start_date <= CAST('".$EM_DateTime->getDate()."' AS DATE) AND event_end_date >= CAST('".$EM_DateTime->getDate()."' AS DATE))";
 				}
-			}elseif ($scope == "month" || $scope == "next-month"){
+			}elseif ($scope == "week" || $scope == 'this-week'){
+				list($start_date, $end_date) = $EM_DateTime->get_week_dates( $scope );
+				$conditions['scope'] = " (event_start_date BETWEEN CAST('$start_date' AS DATE) AND CAST('$end_date' AS DATE))";
+				if( !get_option('dbem_events_current_are_past') ){
+					$conditions['scope'] .= " OR (event_start_date < CAST('$start_date' AS DATE) AND event_end_date >= CAST('$start_date' AS DATE))";
+				}
+			}elseif ($scope == "month" || $scope == "next-month" || $scope == 'this-month'){
 				if( $scope == 'next-month' ) $EM_DateTime->add('P1M');
-				$start_month = $EM_DateTime->modify('first day of this month')->getDate();
+				$start_month = $scope == 'this-month' ? $EM_DateTime->getDate() : $EM_DateTime->modify('first day of this month')->getDate();
 				$end_month = $EM_DateTime->modify('last day of this month')->getDate();
 				$conditions['scope'] = " (event_start_date BETWEEN CAST('$start_month' AS DATE) AND CAST('$end_month' AS DATE))";
 				if( !get_option('dbem_events_current_are_past') ){
@@ -590,6 +596,8 @@ class EM_Object {
 			}else{
 				$conditions['bookings'] = "(event_id = 0)";
 			}
+		}elseif( $bookings == 0 && $bookings !== false ){
+			$conditions['bookings'] = 'event_rsvp=0';
 		}
 		//Default ownership belongs to an event, child objects can just overwrite this if needed.
 		if( is_numeric($owner) ){
@@ -1688,7 +1696,7 @@ class EM_Object {
 	}
 
 	function sanitize_time( $time ){
-		if( !empty($time) && preg_match ( '/^([01]\d|2[0-3]):([0-5]\d) ?(AM|PM)?$/', $time, $match ) ){
+		if( !empty($time) && preg_match ( '/^([01]?\d|2[0-3]):([0-5]\d) ?(AM|PM)?$/', $time, $match ) ){
 			if( !empty($match[3]) && $match[3] == 'PM' && $match[1] != 12 ){
 				$match[1] = 12+$match[1];
 			}elseif( !empty($match[3]) && $match[3] == 'AM' && $match[1] == 12 ){
