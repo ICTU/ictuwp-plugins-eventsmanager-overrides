@@ -9,7 +9,7 @@ Based on version: 5.9.11.3
 
 ## Necessary corrections
 
-###/events-manager.php (line 681)
+### /events-manager.php (line 681)
 /events-manager.php (line 681): 'template_redirect', not 'events_manager_loaded'
 `function __construct(){ add_action( 'template_redirect', array(&$this, 'add_filters')); }`
 
