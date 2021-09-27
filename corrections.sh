@@ -1,5 +1,8 @@
 
-# sh 'corrections.sh' &>/dev/null
+# sh '/Users/paul/shared-paul-files/Webs/git-repos/ictuwp-plugins-eventsmanager-overrides/ictuwp-plugins-eventsmanager-overrides/corrections.sh' &>/dev/null
+
+
+cd '/Users/paul/shared-paul-files/Webs/git-repos/ictuwp-plugins-eventsmanager-overrides/ictuwp-plugins-eventsmanager-overrides/';
 
 echo 'events-manager.php: Change name';
 sed -i '.bak' "s/Plugin Name: Events Manager/Plugin Name:    Events Manager (ICTU WP corrections)/g" 'events-manager.php';
@@ -53,8 +56,11 @@ sed -i '.bak' "s|_GOTO_VISUALLYHIDDEN_|<span class=\"visuallyhidden\">Ga naar pa
 sed -i '.bak' "s|_STRIKE_|\/\/		   |g" 'em-functions.php';
 
 
-
-
+## mogelijk maken om meer dan 100 reserveringen in 1 keer te zien op de boekingsonderhoudspagina
+echo 'em-bookings-table.php: meer dan 100 boekingen op 1 pagina';
+cd 'classes';
+sed -i '.bak' "s|<option value=\"100\">100<\/option>\n|<option value=\"100\">100<\/option><option value=\"250\">250<\/option><option value=\"500\">500<\/option>|g" 'em-bookings-table.php';
+cd ..;
 
 find . -name '*.bak' -type f -delete
 
