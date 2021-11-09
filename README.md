@@ -1,9 +1,11 @@
 # Events manager (overrides)
  Corrections for events manager
 
-Based on version: 5.9.11.3
+Based on version: 5.12.1
 
 ## Version history
+* 5.12.1 - corrections
+* 5.12 - corrections
 * 5.11 - corrections
 * 5.10 - corrections
 
