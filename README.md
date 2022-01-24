@@ -3,6 +3,33 @@
 
 Based on version: 5.12.1
 
+See:
+https://trello.com/c/qdWZ5oyf/630-correcties-voor-de-events-manager-plugin-ictuwp-plugins-eventsmanager-overrides
+
+## let op: folder = 'events-manager'
+De repo staat uitgecheck in de folder 'events-manager'
+
+## Installeren en gebruiken
+
+In terminal, navigeer naar
+`[root]/wp-content/plugins/`
+
+Verwijder de eventsmanager folder:
+`rm -rf events-manager`
+
+Clone de correctie-repo naar de events-manager folder:
+`git clone https://github.com/ICTU/ictuwp-plugins-eventsmanager-overrides events-manager`
+
+## Bijwerken vervanging na updates
+
+Hoe werk je deze bij?
+
+- Zodra er weer een update is van de Events Manager maak je een nieuwe branch aan, op basis van de main branch.
+- Download de recente versie van de Events Manager plugin op https://wordpress.org/plugins/events-manager/
+- pak de ZIP uit en knip + plak alle bestanden naar je git folder
+- loop alle wijzigingen langs; zorg dat de correctie blijven bestaan
+
+
 ## Version history
 * 5.12.1 - corrections
 * 5.12 - corrections
