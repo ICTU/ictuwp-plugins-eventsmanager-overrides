@@ -31,6 +31,7 @@ Hoe werk je deze bij?
 
 
 ## Version history
+* 5.12.2 - no corrections, but a version bump to force the satispress server to distribute this plugin
 * 5.12.1 - corrections
 * 5.12 - corrections
 * 5.11 - corrections
