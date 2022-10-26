@@ -53,7 +53,7 @@ sed -i '.bak' "s|_STRIKE_|\/\/		   |g" 'em-functions.php';
 echo 'em-bookings-table.php: meer dan 100 boekingen op 1 pagina';
 cd 'classes';
 pwd;
-sed -i '.bak' "s|<option value=\"100\">100<\/option>|<option value=\"100\">100<\/option><option value=\"250\">250<\/option><option value=\"500\">500<\/option><option value=\"2000\">2000<\/option><option value=\"5000\">5000<\/option><option value=\"20000\">20.000<\/option>|g" 'em-bookings-table.php';
+sed -i '.bak' "s|<option value=\"100\">100<\/option>|<option value=\"100\">100<\/option><option value=\"250\">250<\/option><option value=\"500\">500<\/option><option value=\"2000\">2000<\/option><option value=\"5000\">5000<\/option><option value=\"10000\">10000<\/option>|g" 'em-bookings-table.php';
 cd ..;
 
 find . -name '*.bak' -type f -delete

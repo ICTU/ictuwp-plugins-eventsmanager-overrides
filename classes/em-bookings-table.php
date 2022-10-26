@@ -387,7 +387,7 @@ class EM_Bookings_Table{
 							<option value="10">10</option>
 							<option value="25">25</option>
 							<option value="50">50</option>
-							<option value="100">100</option><option value="250">250</option><option value="500">500</option><option value="2000">2000</option><option value="5000">5000</option><option value="20000">20.000</option>
+							<option value="100">100</option><option value="250">250</option><option value="500">500</option><option value="2000">2000</option><option value="5000">5000</option><option value="10000">10000</option>
 						</select>
 						<select name="status">
 							<?php
