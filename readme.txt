@@ -1,11 +1,11 @@
 === Events Manager ===
-Contributors: netweblogic, nutsmuggler
-Donate link: http://wp-events-plugin.com
+Contributors: msykes, pxlite, nutsmuggler, netweblogic
+Donate link: https://wp-events-plugin.com
 Tags: bookings, calendar, tickets, events, buddypress, event management, google maps, maps, locations, registration, zoom
 Text Domain: events-manager
 Requires at least: 5.2
-Tested up to: 5.8.1
-Stable tag: 5.12.2
+Tested up to: 6.1
+Stable tag: 6.1.5
 Requires PHP: 5.3
 
 Fully featured event registration management including recurring events, locations management, calendar, Google map integration, booking management
@@ -14,7 +14,7 @@ Fully featured event registration management including recurring events, locatio
 
 Events Manager is a full-featured event registration plugin for WordPress based on the principles of flexibility, reliability and powerful features!
 
-Version 5 now makes events and locations WordPress Custom Post Types, allowing for more possibilities than ever before!
+*Version 6 is the biggest update to date, with a complete overhaul of our calendars, lists, searches and other front-end items. Check it out and enjoy!*
 
 * [Demo](http://demo.wp-events-plugin.com/)
 * [Documentation](http://wp-events-plugin.com/documentation/)
@@ -22,6 +22,7 @@ Version 5 now makes events and locations WordPress Custom Post Types, allowing f
 
 = Main Features =
 
+* Beautiful calendars, search pages, lists and booking forms to enhance your site events.
 * Easy event registration (single day with start/end times)
 * Recurring and long (multi-day) event registration
 * Bookings Management (including approval/rejections, export CVS, and more!)
@@ -73,6 +74,21 @@ We have a premium [Pro add-on for Events Manager](http://eventsmanagerpro.com/go
 * PayPal, Stripe, Authorize.net and Offline Payments
 * Custom booking forms
 * Individual Attendee custom forms
+* Printable Invoices and Tickets
+* Send PDF tickets/invoices by email automatically
+* Check In/Out
+* QR Scanning
+ * Manage bookings on your phone
+ * Check In/Out users
+* Waitlists
+* Automation (NEW!) - ultimate flexibility in automation!
+ * Triggers:
+  * X time before/after events start
+  * When a booking status changes
+  * When a booking was booked x time ago
+ * Actions
+  * Send Webhook (Zapier, MS Automation and many other services)
+  * Send Email
 * Coupon Codes
 * Custom booking email per event and gateway
 * Faster support via private Pro forums
@@ -111,15 +127,187 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page, which is upd
 
 == Screenshots ==
 
-1. Event registration and user submitted events pending approval
-2. Event ticketing and bookings forms, can be easily styled.
-3. Multiple tickets with constraints and prices
-4. Locations with google map integration
-5. Event registration page
-6. Manage attendees with various booking reports
+1. Innovative responsive calendar with rings to show eventful dates, colored by category, clickable to expand more event information.
+2. Completely customizable event widgets/blocks and shortcodes.
+3. Beautiful event pages which can be completely customized via our settings page.
+4. Share your events to popular calendar clients.
+5. Display information about your location in widgets, blocks and shortcodes too.
+6. Easily skip to the future with our new calendar navigation and search filters.
+7. Easy-to-use search filters, whether on the phone or desktop.
+8. Search for events and locations within a search radius using Google geo searches.
+9. Intuitive search UI for your visitors.
+10. QUickly switch between search views.
+11. View your events on a Google Map, filter with searches.
+12. Multiple calendar styles, fully responsive according to the width of the calendar.
+13. Responsivve way for mini-calendar to intuitively show dates with many events within a quick glance.
+14. Responsive lists that adapt to the size of its containing content.
+15. Clean forms for submitting and managing events, as well as booking events for users.
 
 == Changelog ==
-= 5.12.2 =
+= 6.1.5 =
+* fixed calendar width display issues due to aspect ratios by shifting aspect min-height calculations into JS
+* added PHP echo functions EM_Notices::display() and EM_Object::json_encode_e()
+* revamped bookings admin tables with support for sorting, name searching, bulk editing
+* fixed some issues with term conditional placeholders when categories or tags disabled
+* added #_EVENTSTARTDATE placeholder
+
+= 6.1.4 =
+* added modal admin messages
+* fixed issue where booking button tries to book first ticket irrespective of availability and results in an error
+* fixed JS issues presented with internlinked date-range pickers when a value is present
+* fixed aesthetic issues for event location editing section when only one location type is permitted
+* fixed login URL issues
+* added em_login_footer action
+* fixed JS bug with calendars displayed in other languages and advanced search disabled
+* fixed calendar advanced search modal not showing if general settings disables advanced searches on search forms
+
+= 6.1.3 =
+* fixed datepicker range JS issues
+* added ability to override email formats (currently only upon installation for event approval email template)
+* added is_recurring and not_recurring conditional event placeholders
+* added option to include or exclude tags/categories listed in the search filter options, this is available in settings page and as tags_/categories_include or tags_/categories_exclude for shortcode
+* fixed potential errors in EM_Ticiket->is_available_to() and changed how EM_Ticket->is_availble() can check availability against a supplied user.
+* fixed EM_Ticket_Bookings->validate() so availability of tickets are validated against user booking belongs to rather than current user (fixes permission issues in manual bookings)
+* fixed datetime issues when an invalid date is stored and setTimezone is invoked, creating a 1970 date rather than blank value
+* added #[\ReturnTypeWillChange] to relevant functions to supress PHP 8.1 deprecated messages
+* removed datetimezone and datetime php8.1 alt files in favour of above supression method for now
+* (in-dev) fixed issues in 6.1.2.3 dev version related to add/edit recurring events JS errors
+* changed booking form headers so they're handled by settings page and can be disabled with blank values
+* added option to add Reply-To event owner for booking emails,
+* added em_booking_email_admin_args filter enabling extra mail args to be added,
+* added $args array param for EM_Mailer::send() so that future enhancements like reply-to can be supplied
+* tweaked heading sizes of booking form headings so they are slightly smaller,
+* fixed template loading of templates/calendar/calendar.php in calendar-full.php and calendar-small.php templates so they are dynamic and overridable
+* added EM_CHECK_THE_LOOP constant to add an additional in_the_loop() check for themes/plugins that mey use em_content outside the loop
+* fixed booking conditional placeholder wiping out event conditional placeholders
+* changed em_booking_output_condition filter so it's only fired when a matching conditional is found for EM_Booking,
+* added em_booking_output_show_condition filter to help determine whether to show a condition
+* fixed search results coming back with incorrect styling layout when in responsive/mobile mode
+* added output methods for APIs via array for JSON for main objects (events, locations, bookings)
+* removed erroneous testing data for filtering categories search option (ids 150 and 151)
+* fixed some display issues for selectize particularly in the dashboard area
+
+= 6.1.2.1 =
+* fixed php 8.1 fatal error
+
+= 6.1.2 =
+* changed EM_Tickets, EM_Bookings and EM_Ticket so event object is stored as referece so get_event() all reference the same parent object,
+* changed em_bookings_ticket_exists hook for when tickets don't exist, $EM_Ticket is pssed as a blank EM_Ticket with the requested $ticket_id
+* removed erroneous em_boking_save action in em-actions.php before anything is actually saved
+* changed the booking_resend_email action to allow AJAX requests
+* changed PHP use of get_class() checks in if statements to instanceof so that extended classes pass,
+* added $event_ids array passed to em_bookings_deleted and em_bookings_delete actions/filters in EM_Bookings::delete() mass deletion,
+* added $force_refresh option to EM_Bookings->get_available_spaces()
+* added $ignore_spaces parameter to EM_Ticket->is_available()
+* added EM_Ticket->is_available_to() function
+* fixed availability issue for unavailable tickets when overriding as an admin
+* added extra action hooks to booking admin area
+* added reserved 'waitlist' booking status numbers 6-8 (if you use custom status numbers, we advise using above 100 for sake of avoiding core collision)
+* fixed some instances where EM_Booking::$disable_restrictions doesn't fully disable every restriction
+* added em_event_load_postdata_other_attributes filter allowing for custom event attributes/meta to be loaded with less code
+* [template change] moved booking form status notices from template into action-based output, default output of these now reside in the classes/em-event.php file
+* fixed some rare instances where EM_Ticket->get_event() doesn't work as intended
+* tweaked em_ticket_is_available to fire even with EM_Bookings::$disable_restrictions enabled
+* added conditionial custom placeholder recursion support for EM_Ticket_Booking objects
+* added JS support for general AJAX forms without need for specific JS code to work using vanilla JS
+* added JS EM_Alert function for generating alerts via modal
+* added $status and $EM_Booking vars to em_booking_button class
+* added code editor features to formats admin section for larger text boxes
+* added em-notice alert box css
+* added cancellation policy allowing cancellation up to x hours before events begin
+* added event_attribute filters allowing for quicker/easier adding/saving custom attributes
+* fixed split booking by ticket exports not working since EM 6.1
+* fixed single ticket mode booking form not displaying as per settings
+* added retroactive fix of calendar templates using old HTML structure (lack of ID in em-calendar enclosing element)
+* enabled text input for datepickers
+* moved loading of selectize CSS and JS directly into events-manager files instead of separate loading
+* fixed has_location_venue conditional displaying for non-physical events
+* fixed critical error if registration data is duplicated in error in bookings_meta table
+* added fix for add to calendar button when used on themes forcing line breaks within content
+* tweaked normalize.css to prevent themes forcing select boxes to display:block (causing flatpickr year select to disappear out of view)
+* fixed issues with serialization/wakeup in sessions for booking objects using new atomic tickets structure (fixes issues with Pro Multiple Booking checkouts)
+* fixed upgrade failures due to emoji data in bookings,
+* fixed issues with older PHP code looping EM_Bookings_Tickets and getting pricing resulting in single-ticket pricing rather than grouped when calling get_price_with_taxes()
+* fixed taxonomy event list pagination issues as well as forced AJAX on non-ajax pagination
+* fixed formatting typo displaying PHP code rather than translated output
+* fixed modal y-axis overflow for advanced search,
+* tweaked modal hidden mode to prevent click/touch blocking
+* fixed duplicate rows output in CSV split by ticket type
+* fixed templates/forms/event-editor.php to show notices within container so styling is inherited
+* added duplicate data removal script for updates that somehow duplicated data within the wp_em_bookings table
+* fixed PHP warning when no events in grouped listing - changed em_events_output_grouped so first argument returns all events from EM_Events::get(), use em_events_output_grouped_events_dates for split-by-dates array
+* fixed login form redirect issues in MultiSite where site_url is different from home_url
+* fixed timezone UTC offsets with minutes not saving properly
+* fixed incorrect label id for single ticket mode spaces select
+* fixed booking data duplication issues when saving personal data in booking admin
+* added backwards-compatible measure to support PHP 8.1 and return type requirements in DateTime and DateTimeZone by including duplicate file with return types which are loaded only with 8.1 and greater
+* added update retrigger if previous update is detected to not have gone through fully
+* fixed login text still showing even if disable login form option set to yes in settings
+* added option to use double-date datepicker for event dates
+* tweaked event date range so that ticket start/end datepickers are linked
+* fixed issue where dates for new event form default to 1970 before creation
+* fixed mobile responsive issues with taxonmy and location lists
+* fixed location placeholders not working when location and event not published yet
+* fixed/removed errant closing p tag in single location default HTML
+
+= 6.1.1 =
+* tweaked installation SQL so it's MariaDB-compatible
+* fixed php warning when no location permalink provided
+
+= 6.1 =
+* WARNING! MAJOR architecture change for how tickets are stored. This should be backward compatible and a well-tested migration process, but (as you should always do anyway) back up before upgrading!
+* fixed CSS issues in the bookings admin dashboard
+* fixed issues with jQuery UI dialogs losing their styling
+* fixed styling issues with the booking form,
+* fixed duplicate 'events span x days' field in recurring events editor
+* moved em_booking_form_footer action further down the booking form to ensure greater backwards compatibility with Pro updates
+* removed upgrade/migration options for EM v4
+* added split/atomic tickets so each space booked has its own ticket reference and uuid (backwards compatible)
+* added atomic booking meta with dedicated em_bookings_meta table and transition out of the old serialized booking (bookings_meta will still be synced for backwards compatibility for now)
+* added uuid v4 to ticket booking records and entire bookings (for later use such as retrieving booking info anonymously)
+* improved logic/architecture of booking ticket retrieval of post and validation by compartmentalizing each post/validation to specificly relevant objects
+* added new EM_Ticket_Bookings object to group individual ticket bookings of the same ticket within a booking
+* added ArrayAccess implementation to EM_Tickets_Bookings and EM_Ticket_Bookings for more sensible traversing for developers
+* added __debugInfo() to ticket objects to prevent irrelevant recursion whilst debugging print_r and var_dump
+* added improvements to installation process in the event that upgrade routines terminate early or time out
+* added multiple new actions for outputting ticket booking information on the booking admin
+* added default email attachment array so that all other hooks add to it rather than replace the array
+* added output() functionality for individual ticket bookings so that plugins can add placeholders
+* changed post handling of ticket booking objects so that new ticket bookings are assigned a uuid immmediately before calling actions/filters
+
+= 6.0.1 =
+* breaking changes to templates for those upgrading from 6.0, included warning/nudge for users upgrading from 6.0
+* added more fine-grained settings to the Settings > Styling Options section allowing to disable styling elements throughout the plugin
+* fixed modal transition CSS issues
+* added advanced mode enabling users to directly use some, all or none our plugin template files for formats rather than the settings page
+* improved reset option for all overridable placeholder formats in settings allowing for users to reload default formats into individual text boxes
+* added ability to override plugin template files via wp-content/plugin-templates/events-manager/
+* added styling options to allow the use of theme font family, width, height and weight
+* maded default styling options to use theme properties when upgrading from EM < v6.0.1
+
+= 6.0 =
+* MAJOR UI overhaul inclusding complete rewrite of calendars, lists, search
+* Large overhaul of booking forms, but even more to come here!
+* new base CSS framework to offer maximum theme consistency
+* partial overhaul of front-end editors to add responsive support (more to come!)
+* minor tweaks to dashboard editor meta boxes (more to come)
+* responsive support for all front-end display items
+* new datepicker and autocomplete modules
+* added limitation to only future events in event calendar
+* added search views, switch between maps, lists and calendars from the search
+* mucn much more new UI related upgrades
+* fixed bug in single ticket mode not updating "available until" time upon saving
+* fixed bookings="user" not working in 5.12 update
+* fixed issue where site language is respected over profile language in admin area for EM content
+* tweaked EM_Calendar::get() sorting to order by start datetime,
+* tweaked EM_Calendar::get() to consider multi-day events as all-day events for purposes of $event_ts_marker indexes,
+* fixed calendar day links containing the limit query param,
+* added EM_Event::get_event_colors() for category color meta
+* added action em_booking_status_changed, em_bookings_table_output_table_filters
+* changed booking_status DB field to allow double-digit status numbers
+* fixed display issues on EM-generated pages wtih block themes
+
+= 5.12.1 =
 * fixed issue with scope sanitization preventing search form searching by date range
 * added limitation to prevent JS loading on non-EM post type editors to potentially help prevent 3rd party conflicts
 * added support for event location displaying url or other custom info for the ical LOCATION property
@@ -1045,7 +1233,7 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page, which is upd
 * fixed 5.5 bug where search attributes being included in pagination links when not necessary
 * fixed calendar not using ordering as per settings
 * fixed chronological ordering on calendars with long and all-day events
-* fixed geo.js not being overridable an overridable template file
+* fixed geo.bak.js not being overridable an overridable template file
 * fixed limit=0 being ignored in shortcodes and functions
 * fixed pagination being forced for categories_list shortcode regardless of attribute
 

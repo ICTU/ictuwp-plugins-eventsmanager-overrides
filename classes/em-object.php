@@ -35,6 +35,7 @@ class EM_Object {
 		//TODO accept all objects as search options as well as ids (e.g. location vs. location_id, person vs. person_id)
 		//Create minimal defaults array, merge it with supplied defaults array
 		$super_defaults = array(
+			'id' => rand(),
 			'limit' => false,
 			'scope' => 'future',
 			'timezone' => false, //default blog timezone
@@ -64,7 +65,6 @@ class EM_Object {
 			'pagination'=>false,
 			'array'=>false,
 			'owner'=>false,
-			'rsvp'=>false, //deprecated for bookings
 			'bookings' => false, //if set to true, only events with bookings enabled are returned
 			'search'=>false,
 			'geo'=>false, //reserved for future searching via name
@@ -171,7 +171,11 @@ class EM_Object {
 				$defaults['scope'][1] = '';
 			}
 			if( empty($defaults['scope'][0]) && empty($defaults['scope'][1]) ){
-				$defaults['scope'] = $super_defaults['scope'];
+				if( !empty($defaults['scope']['name']) ) {
+					$defaults['scope'] = $defaults['scope']['name'];
+				}else{
+					$defaults['scope'] = $super_defaults['scope'];
+				}
 			}
 		}
 		//ORDER and GROUP BY ORDER - split up string array, if just text do a quick validation and set to default if upon failure
@@ -230,8 +234,6 @@ class EM_Object {
 		$category = $args['category'];// - not used anymore, accesses the $args directly
 		$tag = $args['tag'];// - not used anymore, accesses the $args directly
 		$location = $args['location'];
-		$bookings = $args['rsvp'];
-		$bookings = $args['bookings'] !== false ? absint($args['bookings']):$bookings;
 		$owner = $args['owner'];
 		$event = $args['event'];
 		$month = $args['month'];
@@ -585,19 +587,22 @@ class EM_Object {
 		//END TAXONOMY FILTERS
 	
 		//If we want rsvped items, we usually check the event
-		if( $bookings == 1 ){
-			$conditions['bookings'] = 'event_rsvp=1';
-		}elseif( $bookings === 'user' && is_user_logged_in()){
-			//get bookings of user
-			$EM_Person = new EM_Person(get_current_user_id());
-			$booking_ids = $EM_Person->get_bookings(true);
-			if( count($booking_ids) > 0 ){
-				$conditions['bookings'] = "(event_id IN (SELECT event_id FROM ".EM_BOOKINGS_TABLE." WHERE booking_id IN (".implode(',',$booking_ids).")))";
-			}else{
-				$conditions['bookings'] = "(event_id = 0)";
+		if( isset($args['bookings']) && $args['bookings'] !== false ){
+			$bookings = absint($args['bookings']);
+			if( $args['bookings'] === 'user' && is_user_logged_in()) {
+				//get bookings of user
+				$EM_Person = new EM_Person(get_current_user_id());
+				$booking_ids = $EM_Person->get_bookings(true);
+				if (count($booking_ids) > 0) {
+					$conditions['bookings'] = "(event_id IN (SELECT event_id FROM " . EM_BOOKINGS_TABLE . " WHERE booking_id IN (" . implode(',', $booking_ids) . ")))";
+				} else {
+					$conditions['bookings'] = "(event_id = 0)";
+				}
+			}elseif( $bookings == 1 ){
+				$conditions['bookings'] = 'event_rsvp=1';
+			}elseif( $bookings == 0 && $bookings !== false ){
+				$conditions['bookings'] = 'event_rsvp=0';
 			}
-		}elseif( $bookings == 0 && $bookings !== false ){
-			$conditions['bookings'] = 'event_rsvp=0';
 		}
 		//Default ownership belongs to an event, child objects can just overwrite this if needed.
 		if( is_numeric($owner) ){
@@ -675,8 +680,6 @@ class EM_Object {
 		$category = $args['category'];
 		$tag = $args['tag'];
 		$location = $args['location'];
-		$bookings = $args['rsvp'];
-		$bookings = !empty($args['bookings']) ? $args['bookings']:$bookings;
 		$owner = $args['owner'];
 		$event = $args['event'];
 		$month = $args['month'];
@@ -899,7 +902,7 @@ class EM_Object {
 		}
 	
 		//If we want rsvped items, we usually check the event
-		if( $bookings == 1 ){
+		if( $args['bookings'] == 1 ){
 			$query[] = array( 'key' => '_event_rsvp', 'value' => 1, 'compare' => '=' );
 		}
 		//Default ownership belongs to an event, child objects can just overwrite this if needed.
@@ -1035,7 +1038,7 @@ class EM_Object {
 	public static function get_post_search($args = array(), $filter = false, $request = array(), $accepted_searches = array()){
 		if( empty($request) ) $request = $_REQUEST;
 		if( !empty($request['em_search']) && empty($args['search']) ) $request['search'] = $request['em_search']; //em_search is included to circumvent wp search GET/POST clashes
-		$accepted_searches = !empty($accepted_searches) ? $accepted_searches : self::get_default_search();
+		$accepted_searches = !empty($accepted_searches) ? $accepted_searches : static::get_default_search();
 		$accepted_searches = array_diff($accepted_searches, array('format', 'format_header', 'format_footer'));
 		$accepted_searches = apply_filters('em_accepted_searches', $accepted_searches, $args);
 		//merge variables from the $request into $args
@@ -1083,7 +1086,7 @@ class EM_Object {
 		//$default_args are values that can be added to the querystring for use in searching events in pagination either in searches or ajax pagination
 		if( !empty($_REQUEST['action']) && $_REQUEST['action'] == $search_action && empty($default_args) ){
 			//due to late static binding issues in PHP, this'll always return EM_Object::get_default_search so this is a fall-back
-			$default_args = self::get_default_search();
+			$default_args = static::get_default_search();
 		}
 		//go through default arguments (if defined) and build a list of unique non-default arguments that should go into the querystring
 		$unique_args = array(); //this is the set of unique arguments we'll add to the querystring
@@ -1113,7 +1116,7 @@ class EM_Object {
 		//finally, glue the url with querystring and pass onto pagination function
 		$page_link_template = em_add_get_params($page_url, $pag_args, false); //don't html encode, so em_paginate does its thing;
 		if( empty($args['ajax']) || defined('DOING_AJAX') ) $unique_args = array(); //don't use data method if ajax is disabled or if we're already in an ajax request (SERP irrelevenat)
-		$return = apply_filters('em_object_get_pagination_links', em_paginate( $page_link_template, $count, $limit, $page, $unique_args ), $page_link_template, $count, $limit, $page);
+		$return = apply_filters('em_object_get_pagination_links', em_paginate( $page_link_template, $count, $limit, $page, $unique_args, !empty($args['ajax']) ), $page_link_template, $count, $limit, $page);
 		//if PHP is 5.3 or later, you can specifically filter by class e.g. em_events_output_pagination - this replaces the old filter originally located in the actual child classes
 		if( function_exists('get_called_class') ){
 			$return = apply_filters(strtolower(get_called_class()).'_output_pagination', $return, $page_link_template, $count, $limit, $page);
@@ -1372,15 +1375,16 @@ class EM_Object {
 	 * @param string $body
 	 * @param string $email
 	 * @param array $attachments
+	 * @param array $args
 	 * @return string
 	 */
-	function email_send($subject, $body, $email, $attachments = array()){
+	function email_send($subject, $body, $email, $attachments = array(), $args = array() ){
 		global $EM_Mailer;
 		if( !empty($subject) ){
 			if( !is_object($EM_Mailer) ){
 				$EM_Mailer = new EM_Mailer();
 			}
-			if( !$EM_Mailer->send($subject,$body,$email, $attachments) ){
+			if( !$EM_Mailer->send($subject,$body,$email, $attachments, $args) ){
 				if( is_array($EM_Mailer->errors) ){
 					foreach($EM_Mailer->errors as $error){
 						$this->errors[] = $error;
@@ -1454,6 +1458,17 @@ class EM_Object {
 			$return = $_REQUEST['callback']."($return)";
 		}
 		return apply_filters('em_object_json_encode', $return, $array);
+	}
+	
+	/**
+	 * Outputs array as JSON format as per EM_Object::json_encode()
+	 * @param $array
+	 *
+	 * @return void
+	 * @see EM_Object::json_encode()
+	 */
+	public static function json_encode_e($array){
+		echo static::json_encode($array);
 	}
 	
 	/**
@@ -1728,5 +1743,43 @@ class EM_Object {
 		$tax_rate = ($tax_rate > 0) ? $tax_rate : 0;
 		if( $decimal && $tax_rate > 0 ) $tax_rate = $tax_rate / 100;
 		return $tax_rate;
+	}
+	
+	/**
+	 * Untility function, generates a UUIDv4 without dashes.
+	 * @return string
+	 */
+	function generate_uuid(){
+		return str_replace('-', '', wp_generate_uuid4());
+	}
+	
+	/**
+	 * Used to process any tables containing meta, such as bookings_meta or tickets_bookings_meta
+	 * This may likely be moved into another object, which children extend instead of this. If you choose to depend on this function, keep an eye out in future updates, you're best off copying the code for now
+	 * @param array $raw_meta
+	 * @return array
+	 */
+	function process_meta( $raw_meta ){
+		$processed_meta = array();
+		foreach( $raw_meta as $meta ){
+			$meta_value = maybe_unserialize($meta['meta_value']);
+			$meta_key = $meta['meta_key'];
+			if( preg_match('/^_([a-zA-Z\-0-9]+)_/', $meta_key, $match) ){
+				$key = $match[1];
+				$subkey = str_replace('_'.$key.'_', '', $meta_key);
+				if( empty($processed_meta[$key]) ) $processed_meta[$key] = array();
+				if( !empty($processed_meta[$key][$subkey]) ){
+					if( !is_array($processed_meta[$key][$subkey]) ) {
+						$processed_meta[$key][$subkey] = array($processed_meta[$key][$subkey]);
+					}
+					$processed_meta[$key][$subkey][] = $meta_value;
+				}else{
+					$processed_meta[$key][$subkey] = $meta_value;
+				}
+			}else{
+				$processed_meta[$meta_key] = $meta_value;
+			}
+		}
+		return $processed_meta;
 	}
 }

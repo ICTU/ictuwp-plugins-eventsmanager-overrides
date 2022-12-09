@@ -23,7 +23,6 @@ class EM_DateTimeZone extends DateTimeZone {
 					$abs_hour  = abs( $hours );
 					$abs_mins  = abs( $minutes * 60 );
 					$timezone = sprintf( '%s%02d%02d', $sign, $abs_hour, $abs_mins );
-					$this->utc_offset = sprintf( 'UTC%s%d', $sign, abs($offset) );
 				}
 			}
 		}
@@ -58,23 +57,52 @@ class EM_DateTimeZone extends DateTimeZone {
 		return $timezone;
 	}
 	
+	#[\ReturnTypeWillChange]
 	/**
 	 * {@inheritDoc}
 	 * @see DateTimeZone::getName()
 	 */
 	public function getName(){
-		if( $this->utc_offset !== false ){
-			return $this->utc_offset;
+		if( $this->isUTC() ){
+			return 'UTC'.parent::getName();
 		}
 		return parent::getName();
 	}
 	
+	public function isUTC(){
+		$name = parent::getName();
+		return $name[0] === '-' || $name[0] === '+';
+	}
+	
+	/**
+	 * Returns WP-friendly timezone value, which accounts for UTC offsets and modifies accoridnly so that minute offsets also work.
+	 * @return string
+	 */
+	public function getValue(){
+		if( $this->isUTC() ){
+			$time = explode(':', parent::getName());
+			if( !empty($time[1]) ){
+				$mins = $time[1] / 60;
+				$hours = (int) $time[0];
+				if( $hours > 0 ){
+					$time_int = '+' . ($hours + $mins);
+				}else{
+					$time_int = $hours - $mins;
+				}
+				return 'UTC'.$time_int;
+			}
+		}
+		return $this->getName();
+	}
+	
+	#[\ReturnTypeWillChange]
 	/**
 	 * If the timezone has a manual UTC offset, then an empty array of transitions is returned.
 	 * {@inheritDoc}
 	 * @see DateTimeZone::getTransitions()
 	 */
-	public function getTransitions( $timestamp_begin = null, $timestamp_end = null ){
+	public function getTransitions( $timestamp_begin = 0, $timestamp_end = 0 ){
+		if( $timestamp_end === 0 ) $timestamp_end = time() * YEAR_IN_SECONDS;
 		if( $this->utc_offset !== false ){
 			return array();
 		}

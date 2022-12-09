@@ -941,7 +941,7 @@ class EM_Location extends EM_Object {
 					break;
 				case '#_LOCATIONFULLLINE':
 				case '#_LOCATIONFULLBR':
-					$glue = $result == '#_LOCATIONFULLLINE' ? ', ':'<br />';
+					$glue = $result == '#_LOCATIONFULLLINE' ? ', ':'<br>';
 					$replace = $this->get_full_address($glue);
 					break;
 				case '#_MAP': //Deprecated (but will remain)
@@ -1089,11 +1089,11 @@ class EM_Location extends EM_Object {
 				    $args['format_footer'] = get_option('dbem_location_event_list_item_footer_format');
 				    $args['format'] = get_option('dbem_location_event_list_item_format');
 				    $args['no_results_msg'] = get_option('dbem_location_no_events_message');
-					$args['limit'] = get_option('dbem_location_event_list_limit');
+					$args['limit'] = !empty($placeholders[3][$key]) && is_numeric($placeholders[3][$key]) ? absint($placeholders[3][$key]) : get_option('dbem_location_event_list_limit');
 					$args['orderby'] = get_option('dbem_location_event_list_orderby');
 					$args['order'] = get_option('dbem_location_event_list_order');
 					$args['page'] = (!empty($_REQUEST['pno']) && is_numeric($_REQUEST['pno']) )? $_REQUEST['pno'] : 1;
-					if( $target == 'email' ){
+					if( $target == 'email' || !empty($placeholders[3][$key])  ){
 						$args['pagination'] = 0;
 						$args['page'] = 1;
 					}
@@ -1170,6 +1170,32 @@ class EM_Location extends EM_Object {
 		$url = add_query_arg( $args, "https://www.google.com/maps/embed/v1/place");
 		return apply_filters('em_location_get_google_maps_embed_url', $url, $this);
 	}
+	
+	public function to_api(){
+		return array (
+			'name' => $this->location_name,
+			'id' => $this->location_id,
+			'parent' => $this->location_parent,
+			'post_id' => $this->post_id,
+			'blog_id' => $this->blog_id,
+			'owner' => $this->location_owner,
+			'status' => $this->location_status,
+			'slug' => $this->location_slug,
+			'content' => $this->post_content,
+			'geo' => array(
+				'latitude' => $this->location_latitude,
+				'longitude' => $this->location_longitude,
+			),
+			'address' => array(
+				'address' => $this->location_address,
+				'town' => $this->location_town,
+				'region' => $this->location_region,
+				'state' => $this->location_state,
+				'postcode' => $this->location_postcode,
+				'country' => $this->location_country,
+			),
+			'language' => $this->location_language,
+			'translation' => $this->location_translation,
+		);
+	}
 }
-
-$loc = new EM_Location();
