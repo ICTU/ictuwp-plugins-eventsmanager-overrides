@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Events Manager
+Plugin Name:    Events Manager (ICTU WP corrections)
 Version: 6.1.5
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
@@ -922,7 +922,7 @@ class EM_Formats {
 	protected static $formats_filter = 'em_formats_filter';
 	
 	public static function init(){
-		add_action( 'events_manager_loaded', 'EM_Formats::add_filters');
+		add_action( 'template_redirect', 'EM_Formats::add_filters');
 	}
 	public static function add_filters( $get_all = false ){
 		//you can hook into this filter and activate the format options you want to override by supplying the wp option names in an array, just like in the database.

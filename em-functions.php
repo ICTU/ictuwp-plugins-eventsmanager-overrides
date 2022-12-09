@@ -55,11 +55,11 @@ function em_paginate($link, $total, $limit, $page=1, $data=array(), $ajax = null
 		$placeholder = urlencode('%PAGE%');
 		$link = str_replace('%PAGE%', $placeholder, esc_url($link)); //To avoid url encoded/non encoded placeholders
 	    //Add the back and first buttons
-		    $string = ($page>1 && $startPage != 1) ? '<a class="prev first page-numbers" href="'.str_replace($placeholder,1,$link).'" title="1">&lt;&lt;</a> ' : '';
+		    $string = ($page>1 && $startPage != 1) ? '<a class="prev first page-numbers" href="'.str_replace($placeholder,1,$link).'"><span class="visuallyhidden">Ga naar pagina</span> 1</a> ' : '';
 		    if($page == 2){
-		    	$string .= ' <a class="prev page-numbers" href="'.esc_url($base_link.$base_querystring).'" title="2">&lt;</a> ';
+		    	$string .= ' <a class="prev page-numbers" href="'.esc_url($base_link.$base_querystring).'" aria-label="Ga naar pagina ' . ( $page - 1 ) . '">&lt;</a> ';
 		    }elseif($page > 2){
-		    	$string .= ' <a class="prev page-numbers" href="'.str_replace($placeholder,$page-1,$link).'" title="'.($page-1).'">&lt;</a> ';
+		    	$string .= ' <a class="prev page-numbers" href="'.str_replace($placeholder,$page-1,$link).'" aria-label="Ga naar pagina ' . ( $page - 1 ) . '">&lt;</a> ';
 		    }
 		//Loop each page and create a link or just a bold number if its the current page
 			// 10 11 12 13 14 15 16 17 18 19 20
@@ -78,15 +78,15 @@ function em_paginate($link, $total, $limit, $page=1, $data=array(), $ajax = null
 						$string .= '</span>';
 						$nc_open = false;
 					}
-	                $string .= ' <span class="page-numbers current">'.$i.'</span>';
+	                $string .= ' <span class="page-numbers current"><span class="visuallyhidden">Je bent op pagina</span> '.$i.'</span>';
 					if( $responsive && $i + 2 < $thisLastPage ) {
 						$string .= '<span class="not-current second-half">';
 						$nc_open = true;
 					}
 	            }elseif($i=='1'){
-	                $string .= ' <a class="page-numbers" href="'.esc_url($base_link.$base_querystring).'" title="'.$i.'">'.$i.'</a> ';
+	                $string .= ' <a class="page-numbers" href="'.esc_url($base_link.$base_querystring).'" aria-label="Ga naar pagina ' . $i . '">'.$i.'</a> ';
 	            }else{
-	                $string .= ' <a class="page-numbers" href="'.str_replace($placeholder,$i,$link).'" title="'.$i.'">'.$i.'</a> ';
+	                $string .= ' <a class="page-numbers" href="'.str_replace($placeholder,$i,$link).'" aria-label="Ga naar pagina ' . $i . '">'.$i.'</a> ';
 	            }
 				// leave last number unwrapped
 			    if( !empty($nc_open) && $i + 2 == $thisLastPage ){
@@ -94,8 +94,8 @@ function em_paginate($link, $total, $limit, $page=1, $data=array(), $ajax = null
 			    }
 		    }
 		//Add the forward and last buttons
-		    $string .= ($page < $maxPages) ? ' <a class="next page-numbers" href="'.str_replace($placeholder,$page+1,$link).'" title="'.($page+1).'">&gt;</a> ' :' ' ;
-		    $string .= ($i-1 < $maxPages) ? ' <a class="next last page-numbers" href="'.str_replace($placeholder,$maxPages,$link).'" title="'.$maxPages.'">&gt;&gt;</a> ' : ' ';
+		    $string .= ($page < $maxPages) ? ' <a class="next page-numbers" href="'.str_replace($placeholder,$page+1,$link).'">&gt;</a> ' :' ' ;
+		    $string .= ($i-1 < $maxPages) ? ' <a class="next last page-numbers" href="'.str_replace($placeholder,$maxPages,$link).'">&gt;&gt;</a> ' : ' ';
 		// add ajax flag
 			$ajax_class = $ajax ? 'em-ajax':'';
 		//Return the string
