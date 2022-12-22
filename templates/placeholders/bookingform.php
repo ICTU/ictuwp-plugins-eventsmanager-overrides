@@ -11,6 +11,8 @@
 
 /* @var $EM_Event EM_Event */   
 global $EM_Notices;
+// first hook before anything is checked
+do_action('em_booking_form_start', $EM_Event);
 //count tickets and available tickets
 $tickets_count = count($EM_Event->get_bookings()->get_tickets()->tickets);
 $available_tickets_count = count($EM_Event->get_bookings()->get_available_tickets());
@@ -25,25 +27,28 @@ if( !$is_open && !is_user_logged_in() && $EM_Event->get_bookings()->is_open(true
 	$show_tickets = get_option('dbem_bookings_tickets_show_unavailable') && get_option('dbem_bookings_tickets_show_member_tickets');
 }
 ?>
-<div id="em-booking" class="em-booking <?php if( get_option('dbem_css_rsvp') ) echo 'css-booking'; ?>">
-	<?php
+<div class="<?php em_template_classes('event-booking-form'); ?> input">
+	<?php 
 		// We are firstly checking if the user has already booked a ticket at this event, if so offer a link to view their bookings.
 		$EM_Booking = $EM_Event->get_bookings()->has_booking();
 		do_action('em_booking_form_top', $EM_Event);
 	?>
 	<?php if( is_object($EM_Booking) && !get_option('dbem_bookings_double') ): //Double bookings not allowed ?>
-		<p>
-			<?php echo get_option('dbem_bookings_form_msg_attending'); ?>
-			<a href="<?php echo em_get_my_bookings_url(); ?>"><?php echo get_option('dbem_bookings_form_msg_bookings_link'); ?></a>
-		</p>
+		<?php do_action('em_booking_form_status_already_booked', $EM_Event); ?>
 	<?php elseif( !$EM_Event->event_rsvp ): //bookings not enabled ?>
-		<p><?php echo get_option('dbem_bookings_form_msg_disabled'); ?></p>
-	<?php elseif( $EM_Event->get_bookings()->get_available_spaces() <= 0 ): ?>
-		<p><?php echo get_option('dbem_bookings_form_msg_full'); ?></p>
+		<?php do_action('em_booking_form_status_disabled', $EM_Event); ?>
+	<?php elseif( $EM_Event->get_bookings()->get_available_spaces() <= 0 && !EM_Bookings::$disable_restrictions ): ?>
+		<?php do_action('em_booking_form_status_full', $EM_Event); ?>
 	<?php elseif( !$is_open ): //event has started ?>
-		<p><?php echo get_option('dbem_bookings_form_msg_closed');  ?></p>
+		<?php do_action('em_booking_form_status_closed', $EM_Event); ?>
 	<?php else: ?>
-		<?php echo $EM_Notices; ?>
+		<?php echo $EM_Notices; ?>	
+		<?php 
+		if( !is_user_logged_in() && get_option('dbem_bookings_login_form') ){
+			//User is not logged in, show login form (enabled on settings page)
+			em_locate_template('forms/bookingform/login.php',true, array('EM_Event'=>$EM_Event));
+		}
+		?>
 		<?php if( $tickets_count > 0) : ?>
 			<?php //Tickets exist, so we show a booking form. ?>
 			<form class="em-booking-form" name='booking-form' method='post' action='<?php echo apply_filters('em_booking_form_action_url',''); ?>#em-booking'>
@@ -51,28 +56,37 @@ if( !$is_open && !is_user_logged_in() && $EM_Event->get_bookings()->is_open(true
 			 	<input type='hidden' name='action' value='booking_add'/>
 			 	<input type='hidden' name='event_id' value='<?php echo $EM_Event->get_bookings()->event_id; ?>'/>
 			 	<input type='hidden' name='_wpnonce' value='<?php echo wp_create_nonce('booking_add'); ?>'/>
-				<?php 
+				<?php if( get_option('dbem_bookings_header_tickets') ): ?>
+			 	<h3 class="em-booking-section-title"><?php echo esc_html(get_option('dbem_bookings_header_tickets')); ?></h3>
+				<?php endif; ?>
+				<?php
 					// Tickets Form
-					if( $show_tickets && ($can_book || get_option('dbem_bookings_tickets_show_loggedout')) && ($tickets_count > 1 || get_option('dbem_bookings_tickets_single_form')) ){ //show if more than 1 ticket, or if in forced ticket list view mode
+					if( $show_tickets && ($can_book || get_option('dbem_bookings_tickets_show_loggedout')) ){ //show if more than 1 ticket, or if in forced ticket list view mode
 						do_action('em_booking_form_before_tickets', $EM_Event); //do not delete
 						//Show multiple tickets form to user, or single ticket list if settings enable this
-						//If logged out, can be allowed to see this in settings witout the register form 
-						em_locate_template('forms/bookingform/tickets-list.php',true, array('EM_Event'=>$EM_Event));
+						
+						if ( $available_tickets_count == 1 && !get_option('dbem_bookings_tickets_single_form')) {
+							$EM_Ticket = $EM_Event->get_bookings()->get_available_tickets()->get_first();
+							em_locate_template('forms/bookingform/ticket-single.php', true, array('EM_Event' => $EM_Event, 'EM_Ticket' => $EM_Ticket));
+						} else {
+							//If logged out, can be allowed to see this in settings witout the register form
+							em_locate_template('forms/bookingform/tickets-list.php', true, array('EM_Event' => $EM_Event));
+						}
 						do_action('em_booking_form_after_tickets', $EM_Event); //do not delete
 						$show_tickets = false;
 					}
 				?>
 				<?php if( $can_book ): ?>
-					<div class='em-booking-form-details'>
-						<?php 
-							if( $show_tickets && $available_tickets_count == 1 && !get_option('dbem_bookings_tickets_single_form') ){
-								do_action('em_booking_form_before_tickets', $EM_Event); //do not delete
-								//show single ticket form, only necessary to show to users able to book (or guests if enabled)
-								$EM_Ticket = $EM_Event->get_bookings()->get_available_tickets()->get_first();
-								em_locate_template('forms/bookingform/ticket-single.php',true, array('EM_Event'=>$EM_Event, 'EM_Ticket'=>$EM_Ticket));
-								do_action('em_booking_form_after_tickets', $EM_Event); //do not delete
-							} 
-						?>
+					<?php do_action('em_booking_form_before_registration_info', $EM_Event); //do not delete ?>
+					<?php if( get_option('dbem_bookings_header_reg_info') ): ?>
+						<h3 class="em-booking-section-title"><?php echo get_option('dbem_bookings_header_reg_info'); ?></h3>
+					<?php endif; ?>
+					<div class="em-booking-form-details em-booking-section">
+						<?php if( !is_user_logged_in() && get_option('dbem_bookings_login_form') ): ?>
+						<div class="em-login-trigger">
+							<?php echo sprintf(esc_html__('Do you already have an account with us? %s','events-manager'), '<a href="#">'. esc_html__('Sign In', 'events-manager') .'</a>'); ?>
+						</div>
+						<?php endif; ?>
 						<?php
 							do_action('em_booking_form_before_user_details', $EM_Event);
 							if( has_action('em_booking_form_custom') ){ 
@@ -84,30 +98,33 @@ if( !$is_open && !is_user_logged_in() && $EM_Event->get_bookings()->is_open(true
 							}
 							do_action('em_booking_form_after_user_details', $EM_Event);
 						?>
-						<?php do_action('em_booking_form_footer', $EM_Event); //do not delete ?>
+					</div>
+					<?php do_action('em_booking_form_after_registration_info', $EM_Event); //do not delete ?>
+					<?php do_action('em_booking_form_before_confirmation', $EM_Event); //do not delete ?>
+					<div class="em-booking-form-payment em-booking-section">
+						<?php do_action('em_booking_form_before_pricing', $EM_Event); //do not delete ?>
+						<div class="em-booking-price-summary"></div>
+						<?php do_action('em_booking_form_after_pricing', $EM_Event); //do not delete ?>
+						<?php
+						/* This action pre-theme makeover in v6 was used for any form actions such as payment selection, etc. and had to remain here for backwards compatibility. This can stil be used, and will not be removed, although counter-intuitive as it's not right at the footer */
+						do_action('em_booking_form_footer', $EM_Event); //do not delete
+						?>
 						<div class="em-booking-buttons">
+							<?php do_action('em_booking_form_footer_before_buttons', $EM_Event); //do not delete ?>
 							<?php if( preg_match('/https?:\/\//',get_option('dbem_bookings_submit_button')) ): //Settings have an image url (we assume). Use it here as the button.?>
 							<input type="image" src="<?php echo get_option('dbem_bookings_submit_button'); ?>" class="em-booking-submit" id="em-booking-submit" />
 							<?php else: //Display normal submit button ?>
-							<input type="submit" class="<?php if(is_admin()) echo 'button-primary '; ?>em-booking-submit" id="em-booking-submit" value="<?php echo esc_attr(get_option('dbem_bookings_submit_button')); ?>" />
+							<input type="submit" class="em-booking-submit em-button em-button-1" id="em-booking-submit" value="<?php echo esc_attr(get_option('dbem_bookings_submit_button')); ?>" />
 							<?php endif; ?>
+							<?php do_action('em_booking_form_footer_after_buttons', $EM_Event); //do not delete ?>
 						</div>
-						<?php do_action('em_booking_form_footer_after_buttons', $EM_Event); //do not delete ?>
 					</div>
+					<?php do_action('em_booking_form_after_confirmation', $EM_Event); //do not delete ?>
 				<?php else: ?>
 					<p class="em-booking-form-details"><?php echo get_option('dbem_booking_feedback_log_in'); ?></p>
 				<?php endif; ?>
-			</form>	
-			<?php 
-			if( !is_user_logged_in() && get_option('dbem_bookings_login_form') ){
-				//User is not logged in, show login form (enabled on settings page)
-				em_locate_template('forms/bookingform/login.php',true, array('EM_Event'=>$EM_Event));
-			}
-			?>
-			<br class="clear" style="clear:left;" />  
+			</form>  
 		<?php endif; ?>
 	<?php endif; ?>
-	<?php
-	do_action('em_booking_form_bottom', $EM_Event);
-	?>
+	<?php do_action('em_booking_form_bottom', $EM_Event); ?>
 </div>

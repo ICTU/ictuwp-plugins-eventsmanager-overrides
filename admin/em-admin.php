@@ -176,18 +176,6 @@ function em_admin_warnings() {
 				<?php
 			}
 		}
-		
-		if( em_wp_is_super_admin() && get_option('dbem_migrate_images_nag') ){
-			if( !empty($_GET['disable_dbem_migrate_images_nag']) ){
-				delete_site_option('dbem_migrate_images_nag');
-			}else{
-				?>
-				<div id="em_page_error" class="updated">
-					<p><?php echo sprintf(__('Whilst they will still appear using placeholders, you need to <a href="%s">migrate your location and event images</a> in order for them to appear in your edit forms and media library. <a href="%s">Dismiss message</a>','events-manager'),admin_url().'edit.php?post_type=event&page=events-manager-options&em_migrate_images=1&_wpnonce='.wp_create_nonce('em_migrate_images'), em_add_get_params($_SERVER['REQUEST_URI'], array('disable_dbem_migrate_images_nag' => 1))); ?></p>
-				</div>
-				<?php
-			}
-		}
 		if( !empty($_REQUEST['page']) && 'events-manager-options' == $_REQUEST['page'] && get_option('dbem_pro_dev_updates') == 1 ){
 			?>
 			<div id="message" class="updated">
@@ -315,19 +303,113 @@ function em_user_action_links( $actions, $user ){
 }
 add_filter('user_row_actions','em_user_action_links',10,2);
 
-function em_pro_update_notice(){
-	// Check EM Pro update min
-	if( defined('EMP_VERSION') && EMP_VERSION < EM_PRO_MIN_VERSION && !defined('EMP_DISABLE_WARNINGS') ) {
-		$data = get_site_option('dbem_data');
-		$possible_notices = is_array($data) && !empty($data['admin_notices']) ? $data['admin_notices'] : array();
-		//we may have something to show, so we make sure that there's something to show right now
-		if( !isset($possible_notices['em-pro-updates']) ) {
+// admin modal notices
+class EM_Admin_Modals {
+	
+	public static $output_js = false;
+	
+	public static function init() {
+		add_filter('admin_enqueue_scripts', 'EM_Admin_Modals::admin_enqueue_scripts', 100);
+		add_filter('wp_ajax_em-admin-popup-modal', 'EM_Admin_Modals::ajax');
+	}
+	
+	public static function admin_enqueue_scripts(){
+		if( !current_user_can('update_plugins') ) return;
+		// show modal
+		$data = is_multisite() ? get_site_option('dbem_data') : get_option('dbem_data');
+		if( !empty($data['admin-modals']) ){
+			$show_plugin_pages = !empty($_REQUEST['post_type']) && in_array($_REQUEST['post_type'], array(EM_POST_TYPE_EVENT, EM_POST_TYPE_LOCATION, 'event-recurring'));
+			$show_network_admin = is_network_admin() && !empty($_REQUEST['page']) && preg_match('/^events\-manager\-/', $_REQUEST['page']);
+			// show review nudge
+			if( !empty($data['admin-modals']['review-nudge']) && $data['admin-modals']['review-nudge'] < time() ) {
+				if( $show_plugin_pages || $show_network_admin ) {
+					// enqueue script and load popup action
+					if( !wp_script_is('events-manager-admin') ) EM_Scripts_and_Styles::admin_enqueue(true);
+					add_filter('admin_footer', 'EM_Admin_Modals::review_popup');
+				}
+			}
+		}
+	}
+	
+	public static function review_popup(){
+		// check admin data and see if show data is still enabled
+		?>
+		<div class="em pixelbones em-modal <?php em_template_classes('search', 'search-advanced'); ?> em-admin-modal" id="em-review-nudge" data-nonce="<?php echo wp_create_nonce('em-review-nudge'); ?>">
+			<div class="em-modal-popup">
+				<header>
+					<div class="em-modal-title"><?php esc_html_e('Enjoying Events Manager? Help Us Improve!', 'events-manager'); ?></div>
+				</header>
+				<div class="em-modal-content has-image">
+					<div>
+						<p><?php esc_html_e('Pardon the interruption... we hope you\'re enjoying Events Manager, and if so, we\'d really appreciate a positive review on the wordpress.org repository!', 'events-manager'); ?></p>
+						<p><?php esc_html_e('Events Manager has been maintained, developed and supported for free since it was released in 2008, positive reviews are one that help us keep going.', 'events-manager'); ?></p>
+						<p><?php esc_html_e('If you could spare a few minutes, we would appreciate it if you could please leave us a review.', 'events-manager'); ?></p>
+					</div>
+					<div class="image">
+						<img src="<?php echo EM_DIR_URI . '/includes/images/star-halo.svg'; ?>" style="width:75%; opacity:0.7;">
+						<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>">
+					</div>
+				</div><!-- content -->
+				<footer class="em-submit-section input">
+					<div>
+						<button class="button button-secondary dismiss-modal"><?php esc_html_e('Dismiss Message', 'events-manager'); ?></button>
+					</div>
+					<div>
+						<a href="https://wordpress.org/support/plugin/events-manager/reviews/?filter=5#new-topic-0" class="button button-primary input" target="_blank" style="margin:10px auto; --accent-color:#429543; --accent-color-hover:#429543;">
+							Leave a Review
+							<img src="<?php echo EM_DIR_URI . '/includes/images/five-stars.svg'; ?>" style="max-height:10px; width:50px; margin-left:5px;">
+						</a>
+					</div>
+				</footer>
+			</div><!-- modal -->
+		</div>
+		<?php
+		static::output_js();
+	}
+	
+	public static function output_js(){
+		if( !static::$output_js ){
 			?>
-			<div id="em_page_error" class="notice notice-warning">
-				<p><?php _e('There is a newer version of Events Manager Pro which is recommended for this current version of Events Manager as new features have been added. Please go to the plugin website and download the latest update.','events-manager'); ?></p>
-			</div>
+			<script>
+				jQuery(document).ready(function($){
+					$('.em-admin-modal').each( function(){
+						let modal = $(this);
+						let ignore_event = false;
+						openModal( modal );
+						modal.on('em_modal_close', function(){
+							// send AJAX to close
+							if( ignore_event ) return false;
+							$.post( EM.ajaxurl, { action : 'em-admin-popup-modal', 'dismiss':'close', 'modal':modal.attr('id'), 'nonce': modal.attr('data-nonce') });
+						});
+						modal.find('button.dismiss-modal').on('click', function(){
+							// send AJAX to close
+							ignore_event = true;
+							closeModal(modal);
+							$.post( EM.ajaxurl, { action : 'em-admin-popup-modal', 'dismiss':'button', 'modal':modal.attr('id'), 'nonce':modal.attr('data-nonce') });
+						});
+					});
+				});
+			</script>
 			<?php
+			static::$output_js = true;
+		}
+	}
+	
+	public static function ajax(){
+		if( !empty($_REQUEST['modal']) && wp_verify_nonce($_REQUEST['nonce'], $_REQUEST['modal']) ){
+			$action = sanitize_key( preg_replace('/^em\-/', '', $_REQUEST['modal']) );
+			$data = is_multisite() ? get_site_option('dbem_data') : get_option('dbem_data');
+			if( $_REQUEST['dismiss'] == 'button' || $data['admin-modals'][$action] === 2 ) {
+				// disable the modal so it's not shown again
+				unset($data['admin-modals'][$action]);
+				is_multisite() ? update_site_option('dbem_data', $data) : update_option('dbem_data', $data);
+			}else{
+				// limit popup to EM pages only
+				$data['admin-modals'][$action] = 2;
+				is_multisite() ? update_site_option('dbem_data', $data) : update_option('dbem_data', $data);
+			}
 		}
 	}
 }
+EM_Admin_Modals::init();
 ?>

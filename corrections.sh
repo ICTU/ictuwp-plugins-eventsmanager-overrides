@@ -53,8 +53,28 @@ sed -i '.bak' "s|_STRIKE_|\/\/		   |g" 'em-functions.php';
 echo 'em-bookings-table.php: meer dan 100 boekingen op 1 pagina';
 cd 'classes';
 pwd;
-sed -i '.bak' "s|<option value=\"100\">100<\/option>|<option value=\"100\">100<\/option><option value=\"250\">250<\/option><option value=\"500\">500<\/option><option value=\"2000\">2000<\/option><option value=\"5000\">5000<\/option><option value=\"10000\">10000<\/option>|g" 'em-bookings-table.php';
-cd ..;
+sed -i '.bak' "s|<option value=\"100\">100<\/option>|<option  value=\"100\">100<\/option><option value=\"250\">250<\/option><option value=\"500\">500<\/option><option value=\"2000\">2000<\/option><option value=\"5000\">5000<\/option><option value=\"10000\">10000<\/option>|g" 'em-bookings-table.php';
+# cd ..;
+
+
+cd '/Users/paul/shared-paul-files/Webs/git-repos/ictuwp-plugins-eventsmanager-overrides/ictuwp-plugins-eventsmanager-overrides/admin/bookings/';
+
+sed -i '.bak' "s| title=\"List View\"||g" 'em-cancelled.php';
+
+
+cd '/Users/paul/shared-paul-files/Webs/git-repos/ictuwp-plugins-eventsmanager-overrides/ictuwp-plugins-eventsmanager-overrides/templates/forms/event/';
+pwd;
+ls -l;
+
+sed -i '.bak' "s| title=\"<\"?php echo esc_attr(\"{$EM_Location->location_latitude},{$EM_Location->location_longitude}\"); ?>\"||g" 'location.php';
+
+
+
+#/Users/paul/shared-paul-files/Webs/git-repos/ictuwp-plugins-eventsmanager-overrides/ictuwp-plugins-eventsmanager-overrides/
+#admin/bookings/
+
+
+cd '/Users/paul/shared-paul-files/Webs/git-repos/ictuwp-plugins-eventsmanager-overrides/ictuwp-plugins-eventsmanager-overrides/';
 
 find . -name '*.bak' -type f -delete
 

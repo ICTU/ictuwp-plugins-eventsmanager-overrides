@@ -1,10 +1,11 @@
 <?php
 /**
  * Deals with the booking info for an event
- * @author marcus
+ *
  * @property EM_Booking[] $bookings
+ * @property EM_Event $event
  */
-class EM_Bookings extends EM_Object implements Iterator{
+class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	
 	/**
 	 * Array of EM_Booking objects for a specific event
@@ -25,12 +26,12 @@ class EM_Bookings extends EM_Object implements Iterator{
 	 */
 	var $spaces;
 	/**
-	 * @var boolena Flag for Multilingual functionality, to help prevent unnecessary reloading of this object if already 'translated'
+	 * @var bool Flag for Multilingual functionality, to help prevent unnecessary reloading of this object if already 'translated'
 	 */
 	var $translated;
 	/**
 	 * If flag is true, a registration will be attempted when booking whether the user is logged in or not. Used in cases such as manual bookings (a Pro feature) and should only be enabled during manipulation by an event admin.
-	 * @var unknown
+	 * @var bool
 	 */
 	public static $force_registration;
 	/**
@@ -44,6 +45,12 @@ class EM_Bookings extends EM_Object implements Iterator{
 	protected $available_spaces;
 	
 	/**
+	 * Reference to the event object if this object contains bookings of a specific event only
+	 * @var EM_Event
+	 */
+	protected $event;
+	
+	/**
 	 * Creates an EM_Bookings instance, currently accepts an EM_Event object (gets all bookings for that event) or array of any EM_Booking objects, which can be manipulated in bulk with helper functions.
 	 * @param EM_Event $event
 	 * @return null
@@ -51,9 +58,10 @@ class EM_Bookings extends EM_Object implements Iterator{
 	function __construct( $data = false ){
 		if( is_object($data) && get_class($data) == "EM_Event" ){ //Creates a blank bookings object if needed
 			$this->event_id = $data->event_id;
+			$this->event = $data;
 		}elseif( is_array($data) ){
 			foreach( $data as $EM_Booking ){
-				if( get_class($EM_Booking) == 'EM_Booking'){
+				if( $EM_Booking instanceof EM_Booking ){
 					$this->bookings[] = $EM_Booking;
 				}
 			}
@@ -63,6 +71,8 @@ class EM_Bookings extends EM_Object implements Iterator{
 	public function __get( $var ){
 		if( $var == 'bookings' ){
 			return $this->load();
+		}elseif( $var == 'event' ){
+			return $this->get_event();
 		}
 		return parent::__get( $var );
 	}
@@ -74,6 +84,9 @@ class EM_Bookings extends EM_Object implements Iterator{
 			}else{
 				$this->bookings = null;
 			}
+		}elseif( $var == 'event' && $val instanceof EM_Event ){
+			$this->event = $val;
+			$this->event_id = $this->event->event_id;
 		}
 		parent::__set( $var, $val );
 	}
@@ -90,6 +103,8 @@ class EM_Bookings extends EM_Object implements Iterator{
 		//if isset is invoked on $EM_Bookings->bookings then we'll assume it's only set if the bookings property is empty, not if null.
 		if( $prop == 'bookings' ){
 			return $this->bookings !== null;
+		}elseif ($prop == 'event') {
+			return !empty($this->event);
 		}
 		return parent::__isset( $prop );
 	}
@@ -176,20 +191,25 @@ class EM_Bookings extends EM_Object implements Iterator{
 	 * Smart event locator, saves a database read if possible. Note that if an event doesn't exist, a blank object will be created to prevent duplicates.
 	 */
 	function get_event(){
+		if( $this->event && $this->event->event_id == $this->event_id ){
+			return $this->event;
+		}
 		global $EM_Event;
 		if( is_object($EM_Event) && $EM_Event->event_id == $this->event_id ){
+			$this->event = $EM_Event;
 			return $EM_Event;
 		}else{
 			if( is_numeric($this->event_id) && $this->event_id > 0 ){
-				return em_get_event($this->event_id, 'event_id');
+				$this->event = em_get_event($this->event_id);
+				return $this->event;
 			}elseif( is_array($this->bookings) ){
 				foreach($this->bookings as $EM_Booking){
 					/* @var $EM_Booking EM_Booking */
-					return em_get_event($EM_Booking->event_id, 'event_id');
+					return em_get_event($EM_Booking->event_id);
 				}
 			}
 		}
-		return em_get_event($this->event_id, 'event_id');
+		return em_get_event($this->event_id);
 	}
 	
 	/**
@@ -199,7 +219,7 @@ class EM_Bookings extends EM_Object implements Iterator{
 	 */
 	function get_tickets( $force_reload = false ){
 		if( !is_object($this->tickets) || $force_reload ){
-			$this->tickets = new EM_Tickets($this->event_id);
+			$this->tickets = new EM_Tickets($this->get_event());
 			if( get_option('dbem_bookings_tickets_single') && count($this->tickets->tickets) == 1 ){
 				//if in single ticket mode, then the event booking cut-off is the ticket end date
 		    	$EM_Ticket = $this->tickets->get_first();
@@ -250,9 +270,9 @@ class EM_Bookings extends EM_Object implements Iterator{
 		$tickets = array();
 		foreach ($this->get_tickets() as $EM_Ticket){
 			/* @var $EM_Ticket EM_Ticket */
-			if( $EM_Ticket->is_available($include_member_tickets) ){
+			if( static::$disable_restrictions || $EM_Ticket->is_available($include_member_tickets) ){
 				//within time range
-				if( $EM_Ticket->get_available_spaces() > 0 ){
+				if( static::$disable_restrictions || $EM_Ticket->get_available_spaces() > 0 ){
 					$tickets[] = $EM_Ticket;
 				}
 			}
@@ -280,7 +300,9 @@ class EM_Bookings extends EM_Object implements Iterator{
 				return apply_filters('em_bookings_ticket_exists',true, $EM_Ticket, $this);
 			}
 		}
-		return apply_filters('em_bookings_ticket_exists',false, false,$this);
+		$EM_Ticket = new EM_Ticket();
+		$EM_Ticket->ticket_id = $ticket_id;
+		return apply_filters('em_bookings_ticket_exists',false, $EM_Ticket, $this);
 	}
 	
 	function has_space( $include_member_tickets = false ){
@@ -298,7 +320,11 @@ class EM_Bookings extends EM_Object implements Iterator{
 	
 	function is_open($include_member_tickets = false){
 		//TODO extend booking options
-		$return = $this->has_open_time() && $this->has_space($include_member_tickets);
+		if( static::$disable_restrictions ){
+			$return = true;
+		}else{
+			$return = $this->has_open_time() && $this->has_space($include_member_tickets);
+		}
 		return apply_filters('em_bookings_is_open', $return, $this, $include_member_tickets);
 	}
 	
@@ -308,7 +334,7 @@ class EM_Bookings extends EM_Object implements Iterator{
 	 */
 	function delete(){
 		global $wpdb;
-		$booking_ids = array();
+		$booking_ids = $event_ids = array();
 		if( !empty($this->bookings) ){
 			//get the booking ids tied to this event or preloaded into this object
 			foreach( $this->bookings as $EM_Booking ){
@@ -317,6 +343,8 @@ class EM_Bookings extends EM_Object implements Iterator{
 			$result_tickets = true;
 			$result = true;
 			if( count($booking_ids) > 0 ){
+				// before deleting, get all the event ids associated with these bookings, in case we need to do any checks on those events via filters
+				$event_ids = $wpdb->get_col("SEELCT event_id FROM ". EM_BOOKINGS_TABLE ." WHERE booking_id IN (".implode(',',$booking_ids).");");
 				//Delete bookings and ticket bookings
 				$result_tickets = $wpdb->query("DELETE FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id IN (".implode(',',$booking_ids).");");
 				$result = $wpdb->query("DELETE FROM ".EM_BOOKINGS_TABLE." WHERE booking_id IN (".implode(',',$booking_ids).")");
@@ -324,6 +352,7 @@ class EM_Bookings extends EM_Object implements Iterator{
 		}elseif( !empty($this->event_id) ){
 			//faster way of deleting bookings for an event circumventing the need to load all bookings if it hasn't been loaded already
 			$event_id = absint($this->event_id);
+			$event_ids = array($event_id);
 			$booking_ids = $wpdb->get_col("SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id'");
 			$result_tickets = $wpdb->query("DELETE FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id IN (SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id')");
 			$result = $wpdb->query("DELETE FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id'");
@@ -331,8 +360,8 @@ class EM_Bookings extends EM_Object implements Iterator{
 			//we have not bookings loaded to delete, nor an event to delete bookings from, so bookings are considered 'deleted' since there's nothing ot delete
 			$result = $result_tickets = true;
 		}
-		do_action('em_bookings_deleted', $result, $booking_ids);
-		return apply_filters('em_bookings_delete', $result !== false && $result_tickets !== false, $booking_ids, $this);
+		do_action('em_bookings_deleted', $result, $booking_ids, $event_ids);
+		return apply_filters('em_bookings_delete', $result !== false && $result_tickets !== false, $booking_ids, $this, $event_ids);
 	}
 
 	
@@ -394,7 +423,7 @@ class EM_Bookings extends EM_Object implements Iterator{
 				return false;
 			}
 		}elseif( is_numeric($booking_ids) || is_object($booking_ids) ){
-			$EM_Booking = ( is_object($booking_ids) && get_class($booking_ids) == 'EM_Booking') ? $booking_ids : em_get_booking($booking_ids);
+			$EM_Booking = ( $booking_ids instanceof EM_Booking ) ? $booking_ids : em_get_booking($booking_ids);
 			$result = $EM_Booking->set_status($status);
 			$this->feedback_message = $EM_Booking->feedback_message;
 			return $result;
@@ -421,11 +450,11 @@ class EM_Bookings extends EM_Object implements Iterator{
 	 * Returns number of available spaces for this event. If approval of bookings is on, will include pending bookings depending on em option.
 	 * @return int
 	 */
-	function get_available_spaces(){
-		$spaces = $this->get_spaces();
-		$available_spaces = $spaces - $this->get_booked_spaces();
+	function get_available_spaces( $force_refresh = false ){
+		$spaces = $this->get_spaces($force_refresh);
+		$available_spaces = $spaces - $this->get_booked_spaces($force_refresh);
 		if( get_option('dbem_bookings_approval_reserved') ){ //deduct reserved/pending spaces from available spaces 
-			$available_spaces -= $this->get_pending_spaces();
+			$available_spaces -= $this->get_pending_spaces($force_refresh);
 		}
 		return apply_filters('em_booking_get_available_spaces', $available_spaces, $this);
 	}
@@ -604,10 +633,8 @@ class EM_Bookings extends EM_Object implements Iterator{
 		$where = ( count($conditions) > 0 ) ? " WHERE " . implode ( " AND ", $conditions ):'';
 		
 		//Get ordering instructions
-		$EM_Booking = new EM_Booking();
-		$accepted_fields = $EM_Booking->get_fields(true);
-		$accepted_fields['date'] = 'booking_date';
-		$orderby = self::build_sql_orderby($args, $accepted_fields);
+		$accepted_fields = self::get_sql_accepted_fields();
+		$orderby = self::build_sql_orderby($args, $accepted_fields['orderby']);
 		//Now, build orderby sql
 		$orderby_sql = ( count($orderby) > 0 ) ? 'ORDER BY '. implode(', ', $orderby) : 'ORDER BY booking_date';
 		//Selectors
@@ -618,11 +645,68 @@ class EM_Bookings extends EM_Object implements Iterator{
 		}else{
 			$selectors = '*';
 		}
+		
+		//check if we need to join a location table for this search, which is necessary if any location-specific are supplied, or if certain arguments such as orderby contain location fields
+		$optional_joins = array();
+		$required_joins = array();
+		foreach( $accepted_fields['tables'] as $table_name => $table_data ){
+			$join_table = false;
+			if( $table_name == EM_EVENTS_TABLE ) $join_table = true; // temporary whilst we work out some kinks with metadata
+			if( in_array($table_name, $required_joins) ){
+				$join_table = true;
+			}
+			foreach( $table_data['args'] as $arg ) {
+				$ignore_arg_values = array();
+				if( isset($table_data['ignore_args'][$arg]) ){
+					$ignore_arg_values = is_array($table_data['ignore_args'][$arg]) ? $table_data['ignore_args'][$arg] : array($table_data['ignore_args'][$arg]);
+				}
+				if ( !empty($args[$arg]) && !in_array($args[$arg], $ignore_arg_values) ) {
+					$join_table = true;
+				}elseif( !empty($table_data['empty_args'][$arg]) && isset($args[$arg]) ) {
+					// it could either be an array of 'legit' empty values vs any empty value meaning this table-specific arg isn't used, therefore no join needed
+					if( is_array($table_data['empty_args'][$arg]) ){
+						$join_table = in_array($args[$arg], $table_data['empty_args'][$arg]);
+					}elseif( $args[$arg] !== $table_data['empty_args'][$arg] ){
+						$join_table = true;
+					}
+				}
+				unset($ignore_arg_values);
+			}
+			//check ordering and grouping arguments for precense of location fields requiring a join
+			if( !$join_table ){
+				foreach( array('groupby', 'orderby', 'groupby_orderby') as $arg ){
+					if( !is_array($args[$arg]) ) continue; //ignore this argument if set to false
+					//we assume all these arguments are now array thanks to self::get_search_defaults() cleaning it up
+					foreach( $args[$arg] as $field_name ){
+						if( !empty($accepted_fields['tables'][$table_name]['fields']) && in_array($field_name, $accepted_fields['tables'][$table_name]['fields']) ){
+							$join_table = true;
+							break; //we join, no need to keep searching
+						}elseif( !empty($table_data['orderby_extras'][$field_name]) ){
+							// account for meta joins, which requires a cheeky condition insertion here instead
+							$optional_joins[$table_name] = $wpdb->prepare($table_data['join'], $table_data['orderby_extras'][$field_name]);
+							$join_table = true;
+							break; //we join, no need to keep searching
+						}
+					}
+				}
+			}
+			if( $join_table ){
+				// check if there's any other required joins
+				if( !empty($table_data['requires']) ) {
+					$required_joins[] = $table_data['requires'];
+				}
+				if( empty($optional_joins[$table_name]) ) {
+					$optional_joins[ $table_name ] = $table_data['join'];
+				}
+			}
+		}
+		//plugins can override this optional joining behaviour here in case they add custom WHERE conditions or something like that
+		$optional_joins = apply_filters('em_bookings_get_optional_joins', array_reverse($optional_joins), $args, $accepted_fields);
+		
 		//Create the SQL statement and execute
 		$sql = apply_filters('em_bookings_get_sql',"
-			SELECT $selectors FROM $bookings_table 
-			LEFT JOIN $events_table ON {$events_table}.event_id={$bookings_table}.event_id 
-			LEFT JOIN $locations_table ON {$locations_table}.location_id={$events_table}.location_id
+			SELECT $selectors FROM $bookings_table
+			". implode("\r\n", $optional_joins)."
 			$where
 			$orderby_sql
 			$limit $offset
@@ -709,10 +793,147 @@ class EM_Bookings extends EM_Object implements Iterator{
 		return ( defined('EM_FORCE_REGISTRATION') || self::$force_registration );
 	}
 	
+	public static function get_sql_accepted_fields(){
+		$EM_Booking = new EM_Booking();
+		$EM_Event = new EM_Event();
+		$EM_Location = (new EM_Location())->get_fields(true);
+		$accepted_fields = array(
+			'tables' => array(
+				/* WIP - Meta will work like this to allow re-ordring by custom data, paused temporarily to sort out inconcsistencies with stored data in WP Users vs. meta for guests
+				// see event table key for docs on each array item
+				EM_TICKETS_BOOKINGS_META_TABLE => array(
+					'args' => array(),
+					'join' => "LEFT JOIN ".EM_TICKETS_BOOKINGS_META_TABLE." ON ".EM_TICKETS_BOOKINGS_META_TABLE.".ticket_booking_id=".EM_TICKETS_BOOKINGS_TABLE.".ticket_booking_id",
+					'requires' => EM_TICKETS_BOOKINGS_TABLE,
+					// see booking meta, could add custom attendee data the same way
+				),
+				EM_TICKETS_TABLE => array(
+					'args' => array('ticket_id'),
+					'join' => "LEFT JOIN ".EM_TICKETS_TABLE." ON ".EM_TICKETS_TABLE.".event_id=".EM_EVENTS_TABLE.".event_id",
+					'requires' => EM_TICKETS_BOOKINGS_TABLE,
+					'fields' => (new EM_Ticket())->get_fields(true),
+				),
+				EM_TICKETS_BOOKINGS_TABLE => array(
+					'args' => array(),
+					'join' => "LEFT JOIN ".EM_TICKETS_BOOKINGS_TABLE." ON ". EM_BOOKINGS_TABLE.".booking_id=".EM_BOOKINGS_META_TABLE.".booking_id",
+					'fields' => (new EM_Ticket_Booking())->get_fields(true),
+				),
+				EM_BOOKINGS_META_TABLE => array(
+					'args' => array(),
+					'join' => "LEFT JOIN ".EM_BOOKINGS_META_TABLE." ON ".EM_BOOKINGS_TABLE.".booking_id=".EM_BOOKINGS_META_TABLE.".booking_id AND meta_key=%s",
+					'fields' => array(
+						'user_name' => 'meta_value',
+						'user_email' => 'meta_value',
+					),
+					'orderby_extras' => array(
+						'user_name' => '_registration_user_name',
+						'user_email' => '_registration_user_email',
+					),
+				),
+				/**/
+				EM_LOCATIONS_TABLE => array(
+					'args' => array('town', 'state', 'country', 'region', 'near', 'geo', 'search', 'location_status'), // if we have these we need to join
+					'join' => "LEFT JOIN ".EM_LOCATIONS_TABLE." ON ".EM_LOCATIONS_TABLE.".location_id=".EM_EVENTS_TABLE.".location_id",
+					'requires' => EM_EVENTS_TABLE,
+					'fields' => (new EM_Location())->get_fields(true),
+				),
+				EM_EVENTS_TABLE => array(
+					// accepted args that would require events table to be joined
+					'args' => array('scope', 'timezone', 'status', 'recurring', 'private', 'private_only', 'post_id', 'mode', 'has_location', 'no_location', 'event_location_type', 'has_event_location', 'category', 'tag', 'event_status','recurrence', 'recurrences', 'month', 'year', 'owner', 'language'),
+					// any args that may have a specific empty value that still means it's 'set', could also be an array of empty value types
+					'empty_args' => array('status' => false ),
+					// any args here that match the value or that within the array of values will be considered as ignored, for example scope 'all' doesn't actually require any SQL conditions
+					'ignore_args' => array('scope' => 'all'),
+					// the JOIN SQL required to join this table
+					'join' => "LEFT JOIN ".EM_EVENTS_TABLE." ON ".EM_BOOKINGS_TABLE.".event_id=".EM_EVENTS_TABLE.".event_id",
+					// field names with shortcut field name as key
+					'fields' => (new EM_Event())->get_fields(true),
+					// name of table (or array of tables) this join would also require, if joining based on a dependent table that links it to bookings
+					'requires' => null,
+				),
+			),
+			'prefixes' => array(
+				EM_EVENTS_TABLE => 'event',
+				EM_LOCATIONS_TABLE => 'location',
+				EM_TICKETS_TABLE => 'ticket',
+				EM_BOOKINGS_META_TABLE => 'booking_meta',
+				EM_TICKETS_BOOKINGS_TABLE => 'ticket_booking',
+				EM_TICKETS_BOOKINGS_META_TABLE => 'ticket_booking_meta',
+			),
+			'orderby' => array_combine(array_keys($EM_Booking->fields), array_keys($EM_Booking->fields)), // maps field names to absolute DB field names
+		);
+		$accepted_fields['orderby']['booking_date'] = 'booking_date'; // not covered in fields array
+		// reserved field names that the main object here has right to, other tables use full or prefix with type to map orderby fields
+		$reserved_field_names = array(
+			'spaces', 'post_id', 'blog_id', 'post_content', 'content', 'slug', 'name', 'owner', 'status', 'private', 'language', 'parent', 'translation', 'attributes', 'date_created', 'date_modified',
+		);
+		// go through each table and add to accepted fields. Go in reverse as preference is from least to greatest (for joining dependences optimally)
+		foreach( $accepted_fields['tables'] as $table_name => $table_data ){
+			if( !empty($table_data['fields']) ){
+				foreach( $table_data['fields'] as $field_key => $field_name ){
+					if( in_array($field_key, $reserved_field_names) || !empty($accepted_fields['orderby'][$field_name]) ){
+						$prefix = $accepted_fields['prefixes'][$table_name];
+						$field_name_unique = in_array($field_name, $reserved_field_names) ? $prefix . '_' . $field_name : $field_name;
+						$accepted_fields['orderby'][$field_name_unique] = $table_name.'.'.$field_name;
+					}else{
+						if( !empty($table_data['orderby_extras'][$field_key]) ){
+							// special meta table, so we map the key even though it's not a real field
+							if( empty($accepted_fields['orderby'][$field_key]) ){
+								// duplicates will just be ignored, at this point overriders should be more specific
+								$accepted_fields['orderby'][$field_key] = $table_name.'.'.$field_name;
+							}
+						}else{
+							$accepted_fields['orderby'][$field_name] = $table_name.'.'.$field_name;
+						}
+					}
+				}
+			}
+		}
+		return $accepted_fields;
+		$event_fields = $EM_Event->get_fields(true);
+		$location_fields = $EM_Location->get_fields(true); //will contain location-specific fields, not ambiguous ones
+		// location fields will clash, so they may need special treatment
+		foreach( $location_fields as $field_key => $field_name ){
+			if( in_array($field_name, $event_fields) ){
+				// event takes priority
+				unset($location_fields[$field_key]);
+			}
+			if( empty($event_fields[$field_name]) ){ // map it in entire long-handed name
+				$location_fields[$field_name] = $field_name;
+			}else{
+				$location_fields['location_'.$field_name] = EM_LOCATIONS_TABLE.'.'.$field_name;
+			}
+		}
+		$accepted_fields['tables'] = array(
+			EM_BOOKINGS_TABLE => $EM_Booking->get_fields(true),
+			EM_EVENTS_TABLE => $event_fields,
+			EM_LOCATIONS_TABLE => $location_fields,
+		);
+		$accepted_fields['orderby']['date'] = 'booking_date';
+		if( get_option('dbem_locations_enabled') ){
+			$accepted_fields = array_merge($location_fields, $event_fields, $accepted_fields);
+		}else{
+			//if locations disabled then we don't accept location-specific fields
+			$accepted_fields = array_merge($event_fields, $accepted_fields);
+		}
+	}
+	
+	public static function build_sql_groupby_orderby( $args, $accepted_fields, $default_order = 'ASC' ) {
+		return parent::build_sql_groupby_orderby( $args, $accepted_fields, $default_order ); // TODO: Change the autogenerated stub
+	}
+	
+	/* Overrides EM_Object method to apply a filter to result
+	 * @see wp-content/plugins/events-manager/classes/EM_Object#build_sql_orderby()
+	 */
+	public static function build_sql_orderby( $args, $accepted_fields, $default_order = 'ASC' ){
+		return apply_filters( 'em_bookings_build_sql_orderby', parent::build_sql_orderby($args, $accepted_fields, get_option('dbem_bookings_default_order','booking_date')), $args, $accepted_fields, $default_order );
+	}
+	
 	/* Overrides EM_Object method to apply a filter to result
 	 * @see wp-content/plugins/events-manager/classes/EM_Object#build_sql_conditions()
 	 */
 	public static function build_sql_conditions( $args = array() ){
+		global $wpdb;
 		$conditions = apply_filters( 'em_bookings_build_sql_conditions', parent::build_sql_conditions($args), $args );
 		if( is_numeric($args['status']) ){
 			$conditions['status'] = 'booking_status='.$args['status'];
@@ -732,22 +953,20 @@ class EM_Bookings extends EM_Object implements Iterator{
 			}
 		}
 		if( empty($conditions['event']) && $args['event'] === false ){
-		    $conditions['event'] = EM_BOOKINGS_TABLE.'.event_id != 0';
+			$conditions['event'] = EM_BOOKINGS_TABLE.'.event_id != 0';
+		}
+		if( !empty($args['search']) ){
+			$conditions['search'] = $wpdb->prepare(EM_BOOKINGS_TABLE.'.person_id IN (SELECT user_id FROM '.$wpdb->usermeta ." WHERE meta_value LIKE %s)", '%'.$args['search'].'%');
+			$conditions['search'] .= ' OR ' . $wpdb->prepare(EM_BOOKINGS_TABLE.'.booking_id IN (SELECT booking_id FROM '.EM_BOOKINGS_META_TABLE." WHERE meta_value LIKE %s)", '%'.$args['search'].'%');
+			$conditions['search'] = '('.$conditions['search'].')';
 		}
 		if( is_numeric($args['ticket_id']) ){
-		    $EM_Ticket = new EM_Ticket($args['ticket_id']);
-		    if( $EM_Ticket->can_manage() ){
+			$EM_Ticket = new EM_Ticket($args['ticket_id']);
+			if( $EM_Ticket->can_manage() ){
 				$conditions['ticket'] = EM_BOOKINGS_TABLE.'.booking_id IN (SELECT booking_id FROM '.EM_TICKETS_BOOKINGS_TABLE." WHERE ticket_id='{$args['ticket_id']}')";
-		    }
+			}
 		}
 		return apply_filters('em_bookings_build_sql_conditions', $conditions, $args);
-	}
-	
-	/* Overrides EM_Object method to apply a filter to result
-	 * @see wp-content/plugins/events-manager/classes/EM_Object#build_sql_orderby()
-	 */
-	public static function build_sql_orderby( $args, $accepted_fields, $default_order = 'ASC' ){
-		return apply_filters( 'em_bookings_build_sql_orderby', parent::build_sql_orderby($args, $accepted_fields, get_option('dbem_bookings_default_order','booking_date')), $args, $accepted_fields, $default_order );
 	}
 	
 	/* 
@@ -772,23 +991,23 @@ class EM_Bookings extends EM_Object implements Iterator{
 			$defaults = array_merge($defaults, $array_or_defaults);
 		}
 		//clean up array value
-		if( !empty($args['array']) ){
+		if( !empty($array['array']) ){
 			$EM_Booking = new EM_Booking();
-			if( is_array($args['array']) ){
+			if( is_array($array['array']) ){
 				$clean_arg = array();
-				foreach( $args['array'] as $k => $field ){
+				foreach( $array['array'] as $k => $field ){
 					if( array_key_exists($field, $EM_Booking->fields) ){
 						$clean_arg[] = $field;
 					}
 				}
-				$args['array'] = !empty($clean_arg) ? $clean_arg : true; //if invalid args given, just return all fields
-			}elseif( is_string($args['array']) && array_key_exists($args['array'], $EM_Booking->fields) ){
-				$args['array'] = array($args['array']);
+				$array['array'] = !empty($clean_arg) ? $clean_arg : true; //if invalid args given, just return all fields
+			}elseif( is_string($array['array']) && array_key_exists($array['array'], $EM_Booking->fields) ){
+				$array['array'] = array($array['array']);
 			}else{
-				$args['array'] = true;
+				$array['array'] = true;
 			}
 		}else{
-			$args['array'] = false;
+			$array['array'] = false;
 		}
 		//figure out default owning permissions
 		if( !current_user_can('edit_others_events') ){
@@ -806,30 +1025,74 @@ class EM_Bookings extends EM_Object implements Iterator{
 
 	//Iterator Implementation - if we iterate this object, we automatically invoke the load() function first
 	//and load up all bookings to go through from the database.
+	#[\ReturnTypeWillChange]
     public function rewind(){
     	$this->load();
         reset($this->bookings);
-    }  
+    }
+	#[\ReturnTypeWillChange]
     public function current(){
     	$this->load();
         $var = current($this->bookings);
         return $var;
-    }  
+    }
+	#[\ReturnTypeWillChange]
     public function key(){
     	$this->load();
         $var = key($this->bookings);
         return $var;
-    }  
+    }
+	#[\ReturnTypeWillChange]
     public function next(){
     	$this->load();
         $var = next($this->bookings);
         return $var;
-    }  
+    }
+	#[\ReturnTypeWillChange]
     public function valid(){
     	$this->load();
         $key = key($this->bookings);
         $var = ($key !== NULL && $key !== FALSE);
         return $var;
     }
+	
+	// ArrayAccess Implementation
+	#[\ReturnTypeWillChange]
+	/**
+	 * @param $offset
+	 * @param $value
+	 * @return void
+	 */
+	public function offsetSet($offset, $value) {
+		if (is_null($offset)) {
+			$this->bookings[] = $value;
+		} else {
+			$this->bookings[$offset] = $value;
+		}
+	}
+	#[\ReturnTypeWillChange]
+	/**
+	 * @param $offset
+	 * @return bool
+	 */
+	public function offsetExists($offset) {
+		return isset($this->bookings[$offset]);
+	}
+	#[\ReturnTypeWillChange]
+	/**
+	 * @param $offset
+	 * @return void
+	 */
+	public function offsetUnset($offset) {
+		unset($this->bookings[$offset]);
+	}
+	#[\ReturnTypeWillChange]
+	/**
+	 * @param $offset
+	 * @return EM_Ticket_Bookings|null
+	 */
+	public function offsetGet($offset) {
+		return isset($this->bookings[$offset]) ? $this->bookings[$offset] : null;
+	}
 }
 ?>
