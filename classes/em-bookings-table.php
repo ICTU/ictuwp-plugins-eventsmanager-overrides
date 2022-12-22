@@ -359,15 +359,20 @@ class EM_Bookings_Table extends EM\List_Table {
 						<p><?php _e('Modify what information is displayed in this booking table.','events-manager') ?></p>
 						<div class="<?php echo $uid; ?>-rows-setting"">
 							<label for="<?php echo $uid; ?>-rows-setting"><strong><?php esc_html_e('Results per Page', 'events-manager'); ?></strong></label>
-							<select name="limit" class="<?php echo $id; ?>-filter" id="<?php echo $uid; ?>-rows-setting">
-								<option value="<?php echo esc_attr($this->limit) ?>"><?php echo esc_html(sprintf(__('%s Rows','events-manager'),$this->limit)); ?></option>
-								<option value="5">5</option>
-								<option value="10">10</option>
-								<option value="25">25</option>
-								<option value="50">50</option>
-								<option value="100">100</option><option value="250">250</option><option value="500">500</option><option value="2000">2000</option><option value="5000">5000</option><option value="10000">10000</option>
-							</select>
-						</div>
+                        <select name="limit" class="<?php echo $id; ?>-filter" id="<?php echo $uid; ?>-rows-setting">
+                            <option value="<?php echo esc_attr( $this->limit ) ?>"><?php echo esc_html( sprintf( __( '%s Rows', 'events-manager' ), $this->limit ) ); ?></option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option  value="100">100</option>
+                            <option value="250">250</option>
+                            <option value="500">500</option>
+                            <option value="2000">2000</option>
+                            <option value="5000">5000</option>
+                            <option value="10000">10000</option>
+                        </select>
+                    </div>
 						<div class="em-bookings-table-cols">
 							<div class="em-bookings-cols-selected">
 								<p>
