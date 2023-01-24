@@ -5,7 +5,7 @@ Tags: bookings, calendar, tickets, events, buddypress, event management, google 
 Text Domain: events-manager
 Requires at least: 5.2
 Tested up to: 6.1
-Stable tag: 6.1.5
+Stable tag: 6.3
 Requires PHP: 5.3
 
 Fully featured event registration management including recurring events, locations management, calendar, Google map integration, booking management
@@ -22,11 +22,12 @@ Events Manager is a full-featured event registration plugin for WordPress based 
 
 = Main Features =
 
-* Beautiful calendars, search pages, lists and booking forms to enhance your site events.
+* Beautiful calendars, search pages, lists, grids and booking forms to enhance your site events.
 * Easy event registration (single day with start/end times)
 * Recurring and long (multi-day) event registration
 * Bookings Management (including approval/rejections, export CVS, and more!)
 * Multiple Tickets
+* *(New)* Fully-featured graph and statistics including bar/line/pie with comparison and stacking
 * MultiSite Support
 * Multiple Location Types
  * Physical Locations
@@ -95,6 +96,18 @@ We have a premium [Pro add-on for Events Manager](http://eventsmanagerpro.com/go
 
 For more information or to go pro, [visit our plugin website](http://wp-events-plugin.com/features/).
 
+= Additional Plugin Integrations =
+
+Whilst there's many third party integrations with our own plugin, here's some we've integrated ourselves!
+
+* Included in Events Manager (automatic integration)
+ * [BuddyPress](https://wordpress.org/plugins/buddypress/)
+ * [WP FullCalendar](https://wordpress.org/plugins/wp-fullcalendar/)
+ * [Thrive Automator](https://wordpress.org/plugins/thrive-automator/)
+* Additional Add-Ons
+ * [Zoom](https://wordpress.org/plugins/events-manager-zoom/)
+ * [WPML Multilingual Sites](https://wordpress.org/plugins/events-manager-wpml/)
+
 == Installation ==
 
 Events Manager works like any standard Wordpress plugin, and requires little configuration to start managing events. If you get stuck, visit the our documentation and support forums.
@@ -132,18 +145,40 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page, which is upd
 3. Beautiful event pages which can be completely customized via our settings page.
 4. Share your events to popular calendar clients.
 5. Display information about your location in widgets, blocks and shortcodes too.
-6. Easily skip to the future with our new calendar navigation and search filters.
-7. Easy-to-use search filters, whether on the phone or desktop.
-8. Search for events and locations within a search radius using Google geo searches.
-9. Intuitive search UI for your visitors.
-10. QUickly switch between search views.
-11. View your events on a Google Map, filter with searches.
-12. Multiple calendar styles, fully responsive according to the width of the calendar.
-13. Responsivve way for mini-calendar to intuitively show dates with many events within a quick glance.
-14. Responsive lists that adapt to the size of its containing content.
-15. Clean forms for submitting and managing events, as well as booking events for users.
+6. Full-featured statistics and insights into your ticket sales via multiple graph types, including comparison and stacking.
+7. Easily skip to the future with our new calendar navigation and search filters.
+8. Easy-to-use search filters, whether on the phone or desktop.
+9. Search for events and locations within a search radius using Google geo searches.
+10. Intuitive search UI for your visitors.
+11. QUickly switch between search views.
+12. View your events on a Google Map, filter with searches.
+13. Multiple calendar styles, fully responsive according to the width of the calendar.
+14. Responsivve way for mini-calendar to intuitively show dates with many events within a quick glance.
+15. Responsive lists that adapt to the size of its containing content.
+16. Clean forms for submitting and managing events, as well as booking events for users.
+17. Dashboard graph widget for quick review of your event bookings with tons of meaningful data views.
+18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 6.3 =
+* fixed mobile display issue for selecting list views from search toolbar
+* added grid view for events and locations
+* tweaked code to run view logic through functions and filters making it easier to add new views
+* fixed pagination issues when in a different than default view
+
+= 6.2.1 =
+* bugfix for graphs comparing time periods showing same period for both datasets
+
+= 6.2 =
+* added booking statistic charts to WP dashboard, bookings dashboard and event bookings manage view
+
+= 6.1.6 =
+* fixed bookings admin table pagination and action link issues
+* moved AJAX actions from init to wp_loaded
+* fixed potential em_booking_save filter bug still mailing emails if short-circuited with a false result,
+* added em_booking_added to EM_Booking::save() which should now be used for any new booking being added rather than em_booking_save or em_bookings_add
+* added Thrive Automator integration
+
 = 6.1.5 =
 * fixed calendar width display issues due to aspect ratios by shifting aspect min-height calculations into JS
 * added PHP echo functions EM_Notices::display() and EM_Object::json_encode_e()
