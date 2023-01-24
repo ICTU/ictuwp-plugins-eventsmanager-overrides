@@ -2,7 +2,7 @@
 /**
  * Performs actions on init. This works for both ajax and normal requests, the return results depends if an em_ajax flag is passed via POST or GET.
  */
-function em_init_actions() {
+function em_init_actions_start() {
 	global $wpdb,$EM_Notices,$EM_Event; 
 	if( defined('DOING_AJAX') && DOING_AJAX ) $_REQUEST['em_ajax'] = true;
 	
@@ -715,7 +715,19 @@ function em_init_actions() {
 		exit();
 	}
 }
-add_action('init','em_init_actions',11);
+
+/**
+ * New action to handle init of EM. It is now being fired in wp_loaded rather than init, the below will either queue up the em_init_actions_start() (previously the em_init_actions() function) if wp_loaded hasn't fired yet, or execute it if added later for whatever reason.
+ * @return void
+ */
+function em_init_actions(){
+	if( !did_action('wp_loaded') ){
+		add_action('wp_loaded', 'em_init_actions_start', 11);
+	}else{
+		em_init_actions_start();
+	}
+}
+add_action('init', 'em_init_actions', 11);
 
 /**
  * Handles AJAX Bookings admin table filtering, view changes and pagination
@@ -767,30 +779,7 @@ function em_ajax_search_and_pagination(){
 		$search_args = em_get_search_form_defaults($args);
 		$args = array_merge($search_args, $args);
 		$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
-		switch( $view ){
-			case 'list-grouped':
-				em_locate_template('templates/events-list-grouped.php', true, array('args'=>$args)); //if successful, this template overrides the settings and defaults, including search
-				break;
-			case 'list':
-				em_locate_template('templates/events-list.php', true, array('args'=>$args)); //if successful, this template overrides the settings and defaults, including search
-				break;
-			case 'map':
-				$args['width'] = '100%';
-				$args['height'] = 0;
-				echo em_get_events_map_shortcode( $args );
-				break;
-			case 'calendar':
-				$args['has_search'] = false; // prevent view and search getting output again
-				echo EM_Calendar::output( $args );
-				break;
-			default:
-				if( has_action('em_events_search_view_'.$view) ){
-					do_action('em_events_search_view_'.$view, $args);
-				}else{
-					em_locate_template('templates/events-list.php', true, array('args'=>$args)); //if successful, this template overrides the settings and defaults, including search
-				}
-				break;
-		}
+		em_output_events_view( $args, $view );
 	}elseif( $_REQUEST['action'] == 'search_locations'){
 		// new and default way of doing things
 		$view = !empty($_REQUEST['view']) && preg_match('/^[a-zA-Z0-9-_]+$/', $_REQUEST['view']) ? $_REQUEST['view'] : 'list';
@@ -812,6 +801,7 @@ function em_ajax_search_and_pagination(){
 				echo em_get_locations_map_shortcode( $args );
 				break;
 		}
+		em_output_locations_view($args, $view);
 	}else{
 		if( $_REQUEST['action'] == 'search_events_grouped' && defined('DOING_AJAX') ) {
 			// legacy

@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name:    Events Manager (ICTU WP corrections)
-Version: 999.1.5
+Version: 999.3
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -10,7 +10,7 @@ Text Domain: events-manager
 */
 
 /*
-Copyright (c) 2022, Marcus Sykes
+Copyright (c) 2023, Marcus Sykes
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // Setting constants
-define('EM_VERSION', '999.1.5'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_VERSION', '999.3'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
 define('EM_PRO_MIN_VERSION', '3.0'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.0'); //self expanatory
 define('EM_DIR', dirname( __FILE__ )); //an absolute path to this directory
@@ -125,6 +125,7 @@ if( is_admin() ){
 	include('classes/em-admin-notices.php');
 	include('admin/em-admin.php');
 	include('admin/em-bookings.php');
+	include('admin/dashboard.php');
 	include('admin/em-docs.php');
 	include('admin/em-help.php');
 	include('admin/em-options.php');
@@ -385,11 +386,20 @@ class EM_Scripts_and_Styles {
 			}
 		}
 	}
+	
+	/**
+	 * Returns an optional suffix to use in CSS/JS enqueueing, which is .min if in production mode
+	 *
+	 * @return string
+	 */
+	public static function min_suffix(){
+		return !((defined('WP_DEBUG') && WP_DEBUG) || (defined('EM_DEBUG') && EM_DEBUG)) ? '.min':'';
+	}
 
 	/**
 	 * Localize the script vars that require PHP intervention, removing the need for inline JS.
 	 */
-	public static function localize_script(){
+	public static function localize_script( $script = 'events-manager' ){
 		global $em_localized_js;
 		$locale_code = substr ( get_locale(), 0, 2 );
 		//Localize
@@ -492,7 +502,7 @@ class EM_Scripts_and_Styles {
 			);
 		}
 		$em_localized_js = apply_filters('em_wp_localize_script', $em_localized_js);
-		wp_localize_script('events-manager','EM', $em_localized_js);
+		wp_localize_script($script,'EM', $em_localized_js);
 	}
 }
 EM_Scripts_and_Styles::init();
@@ -546,6 +556,10 @@ function em_plugins_loaded(){
 	}
 	//bbPress
 	if( class_exists( 'bbPress' ) ) include('em-bbpress.php');
+	// other integrations
+	if( class_exists('\Thrive\Automator\Admin') ){
+		include('integrations/thrive-automator/events-manager-thrive-automator.php');
+	}
 }
 add_filter('plugins_loaded','em_plugins_loaded');
 
@@ -768,6 +782,10 @@ function em_get_template_components_classes( $component ){
 			array_unshift($component_classes, 'em-list');
 			$show_theme_class = get_option('dbem_css_evlist');
 			break;
+		case 'events-grid':
+			array_unshift($component_classes, 'em-grid');
+			$show_theme_class = get_option('dbem_css_evlist');
+			break;
 		case 'categories-list':
 			array_unshift($component_classes, 'em-list');
 			$show_theme_class = get_option('dbem_css_catlist');
@@ -778,6 +796,10 @@ function em_get_template_components_classes( $component ){
 			break;
 		case 'locations-list':
 			array_unshift($component_classes, 'em-list');
+			$show_theme_class = get_option('dbem_css_loclist');
+			break;
+		case 'locations-grid':
+			array_unshift($component_classes, 'em-grid');
 			$show_theme_class = get_option('dbem_css_loclist');
 			break;
 		case 'event-booking-form':
@@ -872,7 +894,7 @@ function em_get_template_classes($component, $subcomponents = array(), $just_sub
 	}elseif( get_option('dbem_css') ) {
 		if( $component_data['use_theme'] ){
 			$base_classes[] = 'em'; // our base class
-			if( $component_data['use_theme'] !== 2 && get_option('dbem_css_theme') && !is_admin() ) {
+			if( $component_data['use_theme'] !== 2 && get_option('dbem_css_theme') ) {
 				$base_classes[] = $theme;
 			} // if greater than 1 then it won't include pixelbones
 		}
@@ -990,6 +1012,11 @@ class EM_Formats {
 				'dbem_event_list_item_format',
 				'dbem_event_list_item_format_footer',
 			),
+			'events-grid' => array(
+				'dbem_event_grid_item_format_header',
+				'dbem_event_grid_item_format',
+				'dbem_event_grid_item_format_footer',
+			),
 			'event-single' => array(
 				'dbem_single_event_format',
 			),
@@ -1006,6 +1033,11 @@ class EM_Formats {
 				'dbem_location_list_item_format_header',
 				'dbem_location_list_item_format',
 				'dbem_location_list_item_format_footer',
+			),
+			'locations-grid' => array(
+				'dbem_location_grid_item_format_header',
+				'dbem_location_grid_item_format',
+				'dbem_location_grid_item_format_footer',
 			),
 			'location-single' => array(
 				'dbem_single_location_format',

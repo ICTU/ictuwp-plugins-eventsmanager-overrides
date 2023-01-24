@@ -89,6 +89,7 @@ class EM_Bookings_Table extends EM\List_Table {
 		}
 		$this->limit = ( !empty($_REQUEST['limit']) && is_numeric($_REQUEST['limit'])) ? $_REQUEST['limit'] : 20;//Default limit
 		$this->page = ( !empty($_REQUEST['pno']) && is_numeric($_REQUEST['pno']) ) ? $_REQUEST['pno']:1;
+		$_REQUEST['paged'] = $this->page;
 		$this->offset = ( $this->page > 1 ) ? ($this->page-1)*$this->limit : 0;
 		$this->scope = ( !empty($_REQUEST['scope']) && array_key_exists($_REQUEST ['scope'], em_get_scopes()) ) ? sanitize_text_field($_REQUEST['scope']):'future';
 		$this->status = get_option('dbem_bookings_approval') ? 'needs-attention':'confirmed';
@@ -359,20 +360,15 @@ class EM_Bookings_Table extends EM\List_Table {
 						<p><?php _e('Modify what information is displayed in this booking table.','events-manager') ?></p>
 						<div class="<?php echo $uid; ?>-rows-setting"">
 							<label for="<?php echo $uid; ?>-rows-setting"><strong><?php esc_html_e('Results per Page', 'events-manager'); ?></strong></label>
-                        <select name="limit" class="<?php echo $id; ?>-filter" id="<?php echo $uid; ?>-rows-setting">
-                            <option value="<?php echo esc_attr( $this->limit ) ?>"><?php echo esc_html( sprintf( __( '%s Rows', 'events-manager' ), $this->limit ) ); ?></option>
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option  value="100">100</option>
-                            <option value="250">250</option>
-                            <option value="500">500</option>
-                            <option value="2000">2000</option>
-                            <option value="5000">5000</option>
-                            <option value="10000">10000</option>
-                        </select>
-                    </div>
+							<select name="limit" class="<?php echo $id; ?>-filter" id="<?php echo $uid; ?>-rows-setting">
+								<option value="<?php echo esc_attr($this->limit) ?>"><?php echo esc_html(sprintf(__('%s Rows','events-manager'),$this->limit)); ?></option>
+								<option value="5">5</option>
+								<option value="10">10</option>
+								<option value="25">25</option>
+								<option value="50">50</option>
+								<option  value="100">100</option><option value="250">250</option><option value="500">500</option><option value="2000">2000</option><option value="5000">5000</option><option value="10000">10000</option>
+							</select>
+						</div>
 						<div class="em-bookings-table-cols">
 							<div class="em-bookings-cols-selected">
 								<p>
@@ -570,14 +566,14 @@ class EM_Bookings_Table extends EM\List_Table {
 								if( $this->show_tickets ){
 									foreach($EM_Booking->get_tickets_bookings()->tickets_bookings as $EM_Ticket_Booking){
 										$row = $this->get_row($EM_Ticket_Booking);
-										foreach( $row as $row_cell ){
-										?><td><?php echo $row_cell; ?></td><?php
+										foreach( $row as $key => $row_cell ){
+										?><td class="em-bt-col-<?php echo esc_attr($key); ?>"class="em-bt-col-<?php echo esc_attr($key); ?>"><?php echo $row_cell; ?></td><?php
 										}
 									}
 								}else{
 									$row = $this->get_row($EM_Booking);
-									foreach( $row as $row_cell ){
-									?><td><?php echo $row_cell; ?></td><?php
+									foreach( $row as $key => $row_cell ){
+									?><td class="em-bt-col-<?php echo esc_attr($key); ?>"><?php echo $row_cell; ?></td><?php
 									}
 								}
 								?>
@@ -734,7 +730,7 @@ class EM_Bookings_Table extends EM\List_Table {
 				$val = self::sanitize_spreadsheet_cell($val);
 			}
 			//add to cols
-			$cols[] = $val;
+			$cols[$col] = $val;
 		}
 		return $cols;
 	}
