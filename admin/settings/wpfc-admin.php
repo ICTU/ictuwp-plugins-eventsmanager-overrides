@@ -19,7 +19,7 @@ add_action('admin_notices', 'wpfc_em_admin_notice');
 function wpfc_em_admin_options(){
 	?>
 	<div  class="postbox " >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3 class='hndle'><span><?php _e ( 'Full Calendar Options', 'events-manager'); ?> </span></h3>
+		<div class="handlediv"><br /></div><h3 class='hndle'><span><?php _e ( 'Full Calendar Options', 'events-manager'); ?> </span></h3>
 		<div class="inside">
 			<p  class="em-boxheader"><?php echo sprintf(__('Looking for the rest of the FullCalendar Options? They\'ve moved <a href="%s">here</a>, the options below are for overriding specific bits relevant to Events Manager.','events-manager'), admin_url('options-general.php?page=wp-fullcalendar')); ?></p>
 			<table class='form-table'>

@@ -549,7 +549,7 @@ function em_admin_options_page() {
 			
 			<?php /*
 			<div  class="postbox " >
-			<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Debug Modes', 'events-manager'); ?> </span></h3>
+			<div class="handlediv"><br /></div><h3><span><?php _e ( 'Debug Modes', 'events-manager'); ?> </span></h3>
 			<div class="inside">
 				<table class='form-table'>
 					<?php
@@ -583,7 +583,7 @@ function em_admin_option_box_image_sizes(){
 	global $save_button;
 	?>
 	<div  class="postbox " id="em-opt-image-sizes" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Image Sizes', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Image Sizes', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 	    <p class="em-boxheader"><?php _e('These settings will only apply to the image uploading if using our front-end forms. In your WP admin area, images are handled by WordPress.','events-manager'); ?></p>
 		<table class='form-table'>
@@ -609,7 +609,7 @@ function em_admin_option_box_email(){
 	$current_user = get_user_by('id', get_current_user_id());
 	?>
 	<div  class="postbox "  id="em-opt-email-settings">
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Email Settings', 'events-manager'); ?></span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Email Settings', 'events-manager'); ?></span></h3>
 	<div class="inside em-email-form">
 		<p class="em-email-settings-check em-boxheader">
 			<em><?php _e('Before you save your changes, you can quickly send yourself a test email by clicking this button.','events-manager'); ?>
@@ -684,7 +684,7 @@ function em_admin_option_box_caps(){
 	global $save_button, $wpdb;
 	?>
 	<div  class="postbox" id="em-opt-user-caps" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'User Capabilities', 'events-manager'); ?></span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'User Capabilities', 'events-manager'); ?></span></h3>
 	<div class="inside">
             <table class="form-table">
             <tr><td colspan="2" class="em-boxheader">
@@ -764,7 +764,7 @@ function em_admin_option_box_caps(){
 	            				<td class="<?php echo ( !is_int($odd/2) ) ? 'odd':''; ?>">
 									<?php foreach($capability_group as $cap => $cap_help){ ?>
 	            					<input type="checkbox" name="em_capabilities[<?php echo $role->name; ?>][<?php echo $cap ?>]" value="1" id="<?php echo $role->name.'_'.$cap; ?>" <?php echo $role->has_cap($cap) ? 'checked="checked"':''; ?> />
-	            					&nbsp;<label for="<?php echo $role->name.'_'.$cap; ?>"><?php echo $cap; ?></label>&nbsp;<a href="#" title="<?php echo $cap_help; ?>">?</a>
+	            					&nbsp;<label for="<?php echo $role->name.'_'.$cap; ?>"><?php echo $cap; ?></label>&nbsp;<a href="#">?</a>
 	            					<br />
 	            					<?php } ?>
 	            				</td>
@@ -807,7 +807,7 @@ function em_admin_option_box_uninstall(){
 	$options_data = get_option('dbem_data');  
 	?>
 	<div  class="postbox" id="em-opt-admin-tools" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Admin Tools', 'events-manager'); ?> (<?php _e ( 'Advanced', 'events-manager'); ?>)</span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php _e ( 'Admin Tools', 'events-manager'); ?> (<?php _e ( 'Advanced', 'events-manager'); ?>)</span></h3>
 		<div class="inside">
 			
 			<?php
@@ -995,7 +995,7 @@ function em_admin_option_box_data_privacy(){
 	);
 	?>
     <div  class="postbox " id="em-opt-data-privacy" >
-        <div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Privacy', 'events-manager'); ?> </span></h3>
+        <div class="handlediv"><br /></div><h3><span><?php _e ( 'Privacy', 'events-manager'); ?> </span></h3>
         <div class="inside">
             <p class="em-boxheader"><?php echo sprintf(__('Depending on the nature of your site, you will be subject to one or more national and international privacy/data protection laws such as the %s. Below are some options that you can use to tailor how Events Manager interacts with WordPress privacy tools.','events-manager'), '<a href=http://ec.europa.eu/justice/smedataprotect/index_en.htm">GDPR</a>'); ?></p>
             <p class="em-boxheader"><?php echo sprintf(__('For more information see our <a href="%s">data privacy documentation</a>.','events-manager'), 'http://wp-events-plugin.com/documentation/data-privacy-gdpr-compliance/'); ?></p>

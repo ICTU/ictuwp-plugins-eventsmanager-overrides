@@ -4,7 +4,7 @@
 	
 	<?php do_action('em_options_page_bookings_general_before'); ?>
 	<div  class="postbox " id="em-opt-bookings-general" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__( '%s Options', 'events-manager'),__('General','events-manager')); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__( '%s Options', 'events-manager'),__('General','events-manager')); ?> </span></h3>
 	<div class="inside">
 		<table class='form-table'> 
 			<?php
@@ -40,7 +40,7 @@
 	<?php do_action('em_options_page_bookings_general_after'); ?>
 	
 	<div  class="postbox " id="em-opt-pricing-options" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__( '%s Options', 'events-manager'),__('Pricing','events-manager')); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__( '%s Options', 'events-manager'),__('Pricing','events-manager')); ?> </span></h3>
 	<div class="inside">
 		<table class='form-table'>
 			<?php
@@ -58,7 +58,7 @@
 	</div> <!-- .postbox --> 
 	
 	<div  class="postbox " id="em-opt-booking-feedbacks" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e( 'Customize Feedback Messages', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e( 'Customize Feedback Messages', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 		<p><?php _e('Below you will find texts that will be displayed to users in various areas during the bookings process, particularly on booking forms.','events-manager'); ?></p>
 		<table class='form-table'>
@@ -111,7 +111,7 @@
 	</div> <!-- .postbox --> 
 	
 	<div  class="postbox " id="em-opt-booking-form-options" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__( '%s Options', 'events-manager'),__('Booking Form','events-manager')); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__( '%s Options', 'events-manager'),__('Booking Form','events-manager')); ?> </span></h3>
 	<div class="inside">
 		<table class='form-table'>
 			<?php
@@ -133,7 +133,7 @@
 	</div> <!-- .postbox -->
 	
 	<div  class="postbox " id="em-opt-ticket-options" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__( '%s Options', 'events-manager'),__('Ticket','events-manager')); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__( '%s Options', 'events-manager'),__('Ticket','events-manager')); ?> </span></h3>
 	<div class="inside">
 		<table class='form-table'>
 			<?php
@@ -158,7 +158,7 @@
 	</div> <!-- .postbox --> 
 		
 	<div  class="postbox " id="em-opt-no-user-bookings" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e('No-User Booking Mode','events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e('No-User Booking Mode','events-manager'); ?> </span></h3>
 	<div class="inside">
 		<table class='form-table'>
 			<tr><td colspan='2'>

@@ -287,7 +287,7 @@ function em_updates_check( $transient ) {
     
     return $transient;
 }
-add_filter('pre_set_site_transient_update_plugins', 'em_updates_check', 100); // Hook into the plugin update check and mod for dev version
+// add_filter('pre_set_site_transient_update_plugins', 'em_updates_check', 100); // Hook into the plugin update check and mod for dev version
 
 function em_user_action_links( $actions, $user ){
 	if ( !is_network_admin() && current_user_can( 'manage_others_bookings' ) ){

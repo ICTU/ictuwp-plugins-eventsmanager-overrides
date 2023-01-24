@@ -14,7 +14,7 @@
 	$current_text = $current_status ? '<span class="status enabled">('. $enabled_text .')</span>' : '<span class="status disabled">('.$disabled_text.')</span>';
 	?>
 	<div  class="postbox em-postbox-notice em-postbox-notice-info" id="em-opt-advanced-formatting" data-enabled-text="(<?php echo esc_attr($enabled_text); ?>)" data-disabled-text="(<?php echo esc_attr($disabled_text); ?>)">
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Advanced Mode', 'events-manager'); ?> <?php echo $current_text ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php _e ( 'Advanced Mode', 'events-manager'); ?> <?php echo $current_text ?></span></h3>
 		<div class="inside">
 			<input type="hidden" name="dbem_advanced_formatting" id="em-advanced-formatting" value="<?php echo $current_status; ?>">
 			<div>
@@ -62,7 +62,7 @@
 	</div>
 
 	<div  class="postbox " id="em-opt-events-formats" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Events', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Events', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
 		 	<tr class="em-header"><td colspan="2">
@@ -147,7 +147,7 @@
 	</div> <!-- .postbox -->
 
 	<div  class="postbox " id="em-opt-search-form" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Search Form', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Search Form', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 		<table class="form-table em-search-form-main">
 		    <tr class="em-header"><td colspan="2"><h4><?php _e('Main Search Fields','events-manager'); ?></h4></td></tr>
@@ -245,7 +245,7 @@
 	</div> <!-- .postbox -->
 
 	<div  class="postbox " id="em-opt-date-time" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Date/Time', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Date/Time', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 		<p class="em-boxheader"><?php
 			$date_time_format_tip = sprintf(__('Date and Time formats follow the <a href="%s">WordPress time formatting conventions</a>', 'events-manager'), 'http://codex.wordpress.org/Formatting_Date_and_Time');
@@ -270,7 +270,7 @@
 	</div> <!-- .postbox -->
 	      
    	<div  class="postbox " id="em-opt-calendar-formats" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Calendar', 'events-manager'); ?></span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Calendar', 'events-manager'); ?></span></h3>
 	<div class="inside">
     	<table class="form-table">
     		<?php
@@ -375,7 +375,7 @@
 	
 	<?php if( get_option('dbem_locations_enabled') ): ?>
 	<div  class="postbox " id="em-opt-locations-formats" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Locations', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Locations', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
 		    <tr class="em-header"><td colspan="2"><h4><?php echo sprintf(__('%s Page','events-manager'),__('Locations','events-manager')); ?></h4></td></tr>
@@ -468,7 +468,7 @@
 	
 	<?php if( get_option('dbem_categories_enabled') && !(EM_MS_GLOBAL && !is_main_site()) ): ?>
 	<div  class="postbox " id="em-opt-categories-formats" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Event Categories', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Event Categories', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
     		<?php
@@ -544,7 +544,7 @@
 	
 	<?php if( get_option('dbem_tags_enabled') ): ?>
 	<div  class="postbox " id="em-opt-tags-formats" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Event Tags', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Event Tags', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
     		<?php
@@ -617,7 +617,7 @@
 	<?php endif; ?>
 	
 	<div  class="postbox " id="em-opt-rss-formats" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'RSS', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'RSS', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
 			<?php				
@@ -679,7 +679,7 @@
 	</div> <!-- .postbox -->
 	
 	<div  class="postbox " id="em-opt-maps-formats" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Maps', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Maps', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 		<p class="em-boxheader"><?php echo sprintf(__('You can use Google Maps to show where your events are located. For more information on using maps, <a href="%s">see our documentation</a>.','events-manager'),'http://wp-events-plugin.com/documentation/google-maps/'); ?>
 		<table class='form-table'>

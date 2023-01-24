@@ -2,7 +2,7 @@
 <!-- GENERAL OPTIONS -->
 <div class="em-menu-general em-menu-group">
 	<div  class="postbox " id="em-opt-general"  >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div> <h3><span><?php _e ( 'General Options', 'events-manager'); ?> </span></h3>
+	<div class="handlediv"><br /></div> <h3><span><?php _e ( 'General Options', 'events-manager'); ?> </span></h3>
 	<div class="inside">
         <table class="form-table">
             <?php em_options_radio_binary ( __( 'Disable thumbnails?', 'events-manager'), 'dbem_thumbnails_enabled', __( 'Select yes to disable Events Manager from enabling thumbnails (some themes may already have this enabled, which we cannot be turned off here).','events-manager') );  ?>					
@@ -139,7 +139,7 @@
 	<?php if ( !is_multisite() || (em_wp_is_super_admin() && !get_site_option('dbem_ms_global_caps')) ){ em_admin_option_box_caps(); } ?>
 
 	<div  class="postbox" id="em-opt-google-maps" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Google Maps and Location Services', 'events-manager'); ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php _e ( 'Google Maps and Location Services', 'events-manager'); ?></span></h3>
 		<div class="inside">
 			<div class="em-boxheader">
 				<p><?php esc_html_e('Google Maps API provides you with ways to display maps of your locations and help site visitors find events near their desired locations.','events-manager'); ?></p>
@@ -180,7 +180,7 @@
 	</div> <!-- .postbox -->
 	
 	<div  class="postbox" id="em-opt-event-submissions" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Event Submission Forms', 'events-manager'); ?></span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Event Submission Forms', 'events-manager'); ?></span></h3>
 	<div class="inside">
             <table class="form-table">
             <tr><td colspan="2" class="em-boxheader">
@@ -214,7 +214,7 @@
 	
 	<?php /* 
 	<div  class="postbox" id="em-opt-geo" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Geo APIs', 'events-manager'); ?> <em>(Beta)</em></span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Geo APIs', 'events-manager'); ?> <em>(Beta)</em></span></h3>
 	<div class="inside">
 		<p><?php esc_html_e('Geocoding is the process of converting addresses into geographic coordinates, which can be used to find events and locations near a specific coordinate.','events-manager'); ?></p>
 		<table class="form-table">
@@ -236,7 +236,7 @@
 	*/ ?>
 	
 	<div  class="postbox" id="em-opt-performance-optimization" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Performance Optimization', 'events-manager'); ?> (<?php _e('Advanced','events-manager'); ?>)</span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Performance Optimization', 'events-manager'); ?> (<?php _e('Advanced','events-manager'); ?>)</span></h3>
 	<div class="inside">
 		<?php 
 			$performance_opt_page_instructions = __('In the boxes below, you are expected to write the page IDs. For multiple pages, use comma-separated values e.g. 1,2,3. Entering 0 means EVERY page, -1 means the home page.','events-manager');
@@ -314,7 +314,7 @@
 	</div> <!-- .postbox --> 
 	
 	<div  class="postbox" id="em-opt-style-options" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Styling Options', 'events-manager'); ?> (<?php _e('Advanced','events-manager'); ?>)</span></h3>
+	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Styling Options', 'events-manager'); ?> (<?php _e('Advanced','events-manager'); ?>)</span></h3>
 	<div class="inside">
 		<p style="font-weight:bold; font-size:110%;">
 			<?php echo sprintf( esc_html__('We strongly recommend you check out our %s before disabling any styling here, in most cases you can make profound changes with a few line of CSS or PHP', 'events-manager'), '<a href="#" target="_blank">'. esc_html__('documentation', 'events-manager').'</a>' ); ?>

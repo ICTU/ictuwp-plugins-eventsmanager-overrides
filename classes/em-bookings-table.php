@@ -383,7 +383,7 @@ class EM_Bookings_Table extends EM\List_Table {
 									<?php foreach( $this->cols as $col_key ): ?>
 										<div class="item" data-value="<?php echo esc_attr($col_key); ?>">
 											<span><?php echo esc_html($this->cols_template[$col_key]); ?></span>
-											<a href="#" class="remove" tabindex="-1" title="Remove">×</a>
+											<a href="#" class="remove" tabindex="-1">×</a>
 											<input type="hidden" name="cols[<?php echo esc_attr($col_key); ?>]" value="1" class="em-bookings-col-item" />
 										</div>
 									<?php endforeach; ?>
@@ -446,7 +446,7 @@ class EM_Bookings_Table extends EM\List_Table {
 									<?php foreach( $this->cols as $col_key ): ?>
 										<div class="item" data-value="<?php echo esc_attr($col_key); ?>">
 											<span><?php echo esc_html($this->cols_template[$col_key]); ?></span>
-											<a href="#" class="remove" tabindex="-1" title="Remove">×</a>
+											<a href="#" class="remove" tabindex="-1">×</a>
 											<input type="hidden" name="cols[<?php echo esc_attr($col_key); ?>]" value="1" class="em-bookings-col-item" />
 										</div>
 									<?php endforeach; ?>
@@ -1039,7 +1039,7 @@ class EM_Bookings_Table extends EM\List_Table {
 		$edit_url = em_add_get_params($EM_Booking->get_event()->get_bookings_url(), array('booking_id'=>$EM_Booking->booking_id, 'em_ajax'=>null, 'em_obj'=>null));
 		ob_start();
 		?>
-		<button type="button" class="<?php echo esc_attr($this->id) ?>-action-shortcuts em-tooltip-ddm em-clickable" data-tooltip-class="<?php echo esc_attr($this->id) ?>-action-shortcuts-tooltip" title="<?php esc_attr_e('Booking Actions', 'events-manager'); ?>">&centerdot;&centerdot;&centerdot;</button>
+		<button type="button" class="<?php echo esc_attr($this->id) ?>-action-shortcuts em-tooltip-ddm em-clickable" data-tooltip-class="<?php echo esc_attr($this->id) ?>-action-shortcuts-tooltip">&centerdot;&centerdot;&centerdot;</button>
 		<div class="em-tooltip-ddm-content em-bookings-admin-get-invoice-content">
 			<?php echo implode("<br>", $actions); ?>
 		</div>

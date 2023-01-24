@@ -11,7 +11,7 @@
     	$page_templates = array(''=>__('Posts'), 'page' => __('Pages'), __('Theme Templates','events-manager') => array_flip(get_page_templates()));
     	?>
     	<div  class="postbox" id="em-opt-permalinks" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__('Permalink Slugs','events-manager')); ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__('Permalink Slugs','events-manager')); ?></span></h3>
 		<div class="inside">
 			<p class="em-boxheader"><?php _e('You can change the permalink structure of your events, locations, categories and tags here. Be aware that you may want to set up redirects if you change your permalink structures to maintain SEO rankings.','events-manager'); ?></p>
         	<table class="form-table">
@@ -33,7 +33,7 @@
 		</div> <!-- .postbox -->	
 
 		<div  class="postbox " id="em-opt-event-pages" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__('%s Pages','events-manager'),__('Event','events-manager')); ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__('%s Pages','events-manager'),__('Event','events-manager')); ?></span></h3>
 		<div class="inside">
         	<table class="form-table">
         	<?php
@@ -50,7 +50,7 @@
 		</div> <!-- .postbox -->	
     		
 		<div  class="postbox " id="em-opt-event-archives" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__('%s List/Archives','events-manager'),__('Event','events-manager')); ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__('%s List/Archives','events-manager'),__('Event','events-manager')); ?></span></h3>
 		<div class="inside">
         	<table class="form-table">
 			<tr>
@@ -192,7 +192,7 @@
 		
 		<?php if( get_option('dbem_locations_enabled') ): ?>
 		<div  class="postbox " id="em-opt-location-pages" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__('%s Pages','events-manager'),__('Location','events-manager')); ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__('%s Pages','events-manager'),__('Location','events-manager')); ?></span></h3>
 		<div class="inside">
         	<table class="form-table">
         	<?php 
@@ -239,7 +239,7 @@
 		</div> <!-- .postbox -->	
 		
 		<div  class="postbox " id="em-opt-location-archives" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__('%s List/Archives','events-manager'),__('Location','events-manager')); ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__('%s List/Archives','events-manager'),__('Location','events-manager')); ?></span></h3>
 		<div class="inside">
         	<table class="form-table">
 			<tr>
@@ -362,7 +362,7 @@
 		
 		<?php if( get_option('dbem_categories_enabled') && !(EM_MS_GLOBAL && !is_main_site()) ): ?>
 		<div  class="postbox " id="em-opt-categories-pages" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo __('Event Categories','events-manager'); ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php echo __('Event Categories','events-manager'); ?></span></h3>
 		<div class="inside">
 		    <div class="em-boxheader">
 				<p>
@@ -496,7 +496,7 @@
 		
 		<?php if( get_option('dbem_tags_enabled') ): //disabled for now, will add tag stuff later ?>
 		<div  class="postbox " id="em-opt-tags-pages" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo __('Event Tags','events-manager'); ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php echo __('Event Tags','events-manager'); ?></span></h3>
 		<div class="inside">
 		    <div class="em-boxheader">
 				<p>
@@ -628,7 +628,7 @@
 		<?php endif; ?>
 		
 		<div  class="postbox " id="em-opt-other-pages" >
-		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__('%s Pages','events-manager'),__('Other','events-manager')); ?></span></h3>
+		<div class="handlediv"><br /></div><h3><span><?php echo sprintf(__('%s Pages','events-manager'),__('Other','events-manager')); ?></span></h3>
 		<div class="inside">
         	<p class="em-boxheader"><?php _e('These pages allow you to provide an event management interface outside the admin area on whatever page you want on your website. Bear in mind that this is overridden by BuddyPress if activated.', 'events-manager'); ?></p>
         	<table class="form-table">
