@@ -122,7 +122,7 @@
 								</div>
 							</td>
 							<td>
-								<a href="<?php echo $EM_Event->duplicate_url(); ?>" title="<?php _e ( 'Duplicate this event', 'events-manager'); ?>">
+								<a href="<?php echo $EM_Event->duplicate_url(); ?>">
 									<strong>+</strong>
 								</a>
 							</td>

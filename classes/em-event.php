@@ -2579,7 +2579,7 @@ class EM_Event extends EM_Object{
 					if( $this->can_manage('manage_bookings','manage_others_bookings') ){
 						$bookings_link = esc_url($this->get_bookings_url());
 						if($result == '#_BOOKINGSLINK'){
-							$replace = '<a href="'.$bookings_link.'" title="'.esc_attr($this->event_name).'">'.esc_html($this->event_name).'</a>';
+							$replace = '<a href="'.$bookings_link.'">'.esc_html($this->event_name).'</a>';
 						}else{
 							$replace = $bookings_link;	
 						}

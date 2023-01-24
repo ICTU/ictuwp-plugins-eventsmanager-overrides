@@ -10,7 +10,7 @@ $col_count = absint($col_count); //now we know it's a number
 	<input type="hidden" name="em_tickets[<?php echo $col_count; ?>][ticket_id]" class="ticket_id" value="<?php echo esc_attr($EM_Ticket->ticket_id) ?>" />
 	<div class="em-ticket-form-main">
 		<div class="ticket-name">
-			<label title="<?php esc_attr_e('Enter a ticket name.','events-manager'); ?>"><?php esc_html_e('Name','events-manager') ?></label>
+			<label><?php esc_html_e('Name','events-manager') ?></label>
 			<input type="text" name="em_tickets[<?php echo $col_count; ?>][ticket_name]" value="<?php echo esc_attr($EM_Ticket->ticket_name) ?>" class="ticket_name" />
 		</div>
 		<div class="ticket-description">
@@ -19,24 +19,24 @@ $col_count = absint($col_count); //now we know it's a number
 		</div>
 		<div class="ticket-price"><label><?php esc_html_e('Price','events-manager') ?></label><input type="text" name="em_tickets[<?php echo $col_count; ?>][ticket_price]" class="ticket_price" value="<?php echo esc_attr($EM_Ticket->get_price_precise(true)) ?>" /></div>
 		<div class="ticket-spaces">
-			<label title="<?php esc_attr_e('Enter a maximum number of spaces (required).','events-manager'); ?>"><?php esc_html_e('Spaces','events-manager') ?></label>
+			<label><?php esc_html_e('Spaces','events-manager') ?></label>
 			<input type="text" name="em_tickets[<?php echo $col_count; ?>][ticket_spaces]" value="<?php echo esc_attr($EM_Ticket->ticket_spaces) ?>" class="ticket_spaces" />
 		</div>
 	</div>
 	<div class="em-ticket-form-advanced" style="display:none;">
 		<div class="ticket-spaces ticket-spaces-min inline-inputs">
-			<label title="<?php esc_attr_e('Leave either blank for no upper/lower limit.','events-manager'); ?>"><?php echo esc_html_x('At least','spaces per booking','events-manager');?></label>
+			<label><?php echo esc_html_x('At least','spaces per booking','events-manager');?></label>
 			<input type="text" name="em_tickets[<?php echo $col_count; ?>][ticket_min]" value="<?php echo esc_attr($EM_Ticket->ticket_min) ?>" class="ticket_min" />
 			<?php esc_html_e('spaces per booking', 'events-manager')?>
 		</div>
 		<div class="ticket-spaces ticket-spaces-max inline-inputs">
-			<label title="<?php esc_attr_e('Leave either blank for no upper/lower limit.','events-manager'); ?>"><?php echo esc_html_x('At most','spaces per booking', 'events-manager'); ?></label>
+			<label><?php echo esc_html_x('At most','spaces per booking', 'events-manager'); ?></label>
 			<input type="text" name="em_tickets[<?php echo $col_count; ?>][ticket_max]" value="<?php echo esc_attr($EM_Ticket->ticket_max) ?>" class="ticket_max" />
 			<?php esc_html_e('spaces per booking', 'events-manager')?>
 		</div>
 		<div class="ticket-dates em-time-range">
 			<div class="ticket-dates-from inline-inputs">
-				<label title="<?php esc_attr_e('Add a start or end date (or both) to impose time constraints on ticket availability. Leave either blank for no upper/lower limit.','events-manager'); ?>">
+				<label>
 					<?php esc_html_e('Available from','events-manager') ?>
 				</label>
 				<div class="ticket-dates-from-normal em-datepicker em-datepicker-until" data-until-id="em-ticket-dates-until-<?php echo $col_count; ?>">
@@ -57,7 +57,7 @@ $col_count = absint($col_count); //now we know it's a number
 				<input class="em-time-input em-time-start" type="text" size="8" maxlength="8" name="em_tickets[<?php echo $col_count; ?>][ticket_start_time]" value="<?php echo ( !empty($EM_Ticket->ticket_start) ) ? $EM_Ticket->start()->format( em_get_hour_format() ):''; ?>" />
 			</div>
 			<div class="ticket-dates-to inline-inputs">
-				<label title="<?php esc_attr_e('Add a start or end date (or both) to impose time constraints on ticket availability. Leave either blank for no upper/lower limit.','events-manager'); ?>">
+				<label>
 					<?php esc_html_e('Available until','events-manager') ?>
 				</label>
 				<div class="ticket-dates-to-normal em-datepicker" id="em-ticket-dates-until-<?php echo $col_count; ?>">
@@ -80,7 +80,7 @@ $col_count = absint($col_count); //now we know it's a number
 		</div>
 		<?php if( !get_option('dbem_bookings_tickets_single') || count($EM_Ticket->get_event()->get_tickets()->tickets) > 1 ): ?>
 		<div class="ticket-required inline-inputs">
-			<label title="<?php esc_attr_e('If checked every booking must select one or the minimum number of this ticket.','events-manager'); ?>" class="inline-right"><?php esc_html_e('Required?','events-manager') ?></label>
+			<label class="inline-right"><?php esc_html_e('Required?','events-manager') ?></label>
 			<input type="checkbox" value="1" name="em_tickets[<?php echo $col_count; ?>][ticket_required]" <?php if($EM_Ticket->ticket_required) echo 'checked="checked"'; ?> class="ticket_required" />
 		</div>
 		<?php endif; ?>
