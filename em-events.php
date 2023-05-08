@@ -289,7 +289,7 @@ function em_wp_the_title($data, $id = null){
 	global $post, $wp_query, $EM_Location, $EM_Event;
 	if( empty($post) ) return $data; //fix for any other plugins calling the_content outside the loop
 	//because we're only editing the main title of the page here, we make sure we're in the main query
-	if( is_main_query() && $id == $post->ID ){
+	if( is_main_query() && (property_exists( $post, 'ID' ) && $id == $post->ID ) ){
 	    $events_page_id = get_option ( 'dbem_events_page' );
 	    $locations_page_id = get_option( 'dbem_locations_page' );
 	    $edit_events_page_id = get_option( 'dbem_edit_events_page' );
