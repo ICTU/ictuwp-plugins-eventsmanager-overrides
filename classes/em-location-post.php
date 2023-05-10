@@ -73,6 +73,7 @@ class EM_Location_Post {
 	 */
 	public static function get_the_excerpt($content){
 		global $post;
+		if ( ! $post ) return $content;
 		if( property_exists( $post, 'post_type' ) && $post->post_type == EM_POST_TYPE_LOCATION ){
 			$EM_Location = em_get_location($post);
 			$output = !empty($EM_Location->post_excerpt) ? get_option('dbem_location_excerpt_format'):get_option('dbem_location_excerpt_alt_format');
