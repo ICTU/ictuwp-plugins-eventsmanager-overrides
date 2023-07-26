@@ -42,7 +42,7 @@ class EM_Booking extends EM_Object{
 	var $booking_price = null;
 	var $booking_spaces;
 	var $booking_comment;
-	protected $booking_status = false;
+	public $booking_status = false;
 	var $booking_tax_rate = null;
 	var $booking_taxes = null;
 	var $booking_meta = array();
@@ -200,8 +200,6 @@ class EM_Booking extends EM_Object{
 	    	if( !empty($this->booking_meta['lang']) ){
 	    		return $this->booking_meta['lang'];
 		    }
-	    }elseif( $var == 'booking_status' ){
-			return ($this->booking_status == 0 && !get_option('dbem_bookings_approval') ) ? 1:$this->booking_status;
 	    }elseif( $var == 'person' ){
 	    	return $this->get_person();
 	    }elseif( $var == 'date' ){
@@ -241,13 +239,11 @@ class EM_Booking extends EM_Object{
 	 */
 	public function __wakeup(){
 		// we need to do this here because the __wakeup function bubbles up from the innermost class
-		foreach( $this->get_tickets_bookings() as $EM_Tickets_Bookings ){
-			$EM_Tickets_Bookings->booking = $this;
-			foreach( $EM_Tickets_Bookings as $EM_Ticket_Bookings ){
-				$EM_Ticket_Bookings->booking = $this;
-				foreach( $EM_Tickets_Bookings as $EM_Ticket_Booking ){
-					$EM_Ticket_Booking->booking = $this;
-				}
+		$this->get_tickets_bookings()->booking = $this;
+		foreach( $this->get_tickets_bookings() as $EM_Ticket_Bookings ){
+			$EM_Ticket_Bookings->booking = $this;
+			foreach( $EM_Ticket_Bookings as $EM_Ticket_Booking ){
+				$EM_Ticket_Booking->booking = $this;
 			}
 		}
 	}
@@ -274,8 +270,8 @@ class EM_Booking extends EM_Object{
 	function save($mail = true){
 		global $wpdb;
 		$table = EM_BOOKINGS_TABLE;
-		do_action('em_booking_save_pre',$this);
-		if( $this->can_manage() ){
+		do_action('em_booking_save_pre',$this); // last chance to circumvent
+		if( empty($this->errors) && $this->can_manage() ){
 			//update prices, spaces, person_id
 			$this->get_spaces(true);
 			$this->calculate_price();
@@ -464,6 +460,11 @@ class EM_Booking extends EM_Object{
 			//re-run compatiblity keys function
 			$this->compat_keys(); //depracating in 6.0
 		}
+		/*
+		if( !$this->booking_id && !empty($_REQUEST['booking_intent']) && preg_match('/^[a-zA-Z0-9]{32}/', $_REQUEST['booking_intent']) ){
+			$this->booking_uuid = sanitize_key($_REQUEST['booking_intent']);
+		}
+		*/
 		return apply_filters('em_booking_get_post', empty($this->errors), $this);
 	}
 	
@@ -806,6 +807,18 @@ class EM_Booking extends EM_Object{
 		return $total;
 	}
 	
+	/**
+	 * Returns the 3-character ISO-4217 currency code of this booking.
+	 * NOTE!
+	 * This is an in-progress feature and not recommended overriding as this will cause unexpected results. For now, it will always return the general currency setting from EM.
+	 * You can, however, use this function to reference the current currency of this booking and expect that in the future if the currency varies it will be reflected here.
+	 *
+	 * @return string
+	 */
+	function get_currency(){
+		$currency = get_option('dbem_bookings_currency','USD');
+		return apply_filters('em_booking_get_currency', $currency, $this);
+	}
 	
 	/* Get Objects linked to booking */
 	
@@ -844,7 +857,7 @@ class EM_Booking extends EM_Object{
 	 */
 	function get_tickets_bookings(){
 		global $wpdb;
-		if( !is_object($this->tickets_bookings) || get_class($this->tickets_bookings)!='EM_Tickets_Bookings'){
+		if( !is_object($this->tickets_bookings) || get_class($this->tickets_bookings) != 'EM_Tickets_Bookings'){
 			$this->tickets_bookings = new EM_Tickets_Bookings($this);
 		}
 		return apply_filters('em_booking_get_tickets_bookings', $this->tickets_bookings, $this);
@@ -1000,11 +1013,10 @@ class EM_Booking extends EM_Object{
 	 * @return string
 	 */
 	function get_status(){
-		$status = ($this->booking_status == 0 && !get_option('dbem_bookings_approval') ) ? 1:$this->booking_status;
 		if( $this->booking_status === false && isset($this->previous_status) ) {
 			$status_text = __('Deleted', 'events-manager');
 		}else{
-			$status_text = $this->status_array[ $status ];
+			$status_text = $this->status_array[ $this->booking_status ];
 		}
 		return apply_filters('em_booking_get_status', $status_text, $this);
 	}
@@ -1036,43 +1048,71 @@ class EM_Booking extends EM_Object{
 		return apply_filters('em_booking_delete',( $result !== false ), $this);
 	}
 	
-	function cancel($email = true){
+	/**
+	 * Cancel a booking
+	 * @param $email
+	 * param array $email_args Overloaded
+	 * @return bool
+	 */
+	function cancel( $email = true ){
+		$func_args = func_get_args();
+		$email_args = !empty($func_args[1]) ? $func_args[1] : array();
 		if( $this->get_person()->ID == get_current_user_id() ){
 			$this->manage_override = true; //normally, users can't manage a booking, only event owners, so we allow them to mod their booking status in this case only.
 		}
-		return $this->set_status(3, $email);
+		return $this->set_status(3, $email, false, $email_args);
 	}
 	
 	/**
 	 * Approve a booking.
+	 * @param $email
+	 * param array $email_args Overloaded
 	 * @return bool
 	 */
-	function approve($email = true, $ignore_spaces = false){
-		return $this->set_status(1, $email, $ignore_spaces);
-	}	
+	function approve($email = true, $ignore_spaces = false ){
+		$func_args = func_get_args();
+		$email_args = !empty($func_args[2]) ? $func_args[2] : array();
+		return $this->set_status(1, $email, $ignore_spaces, $email_args);
+	}
+	
 	/**
 	 * Reject a booking and save
+	 * @param $email
+	 * param array $email_args Overloaded
 	 * @return bool
 	 */
-	function reject($email = true){
-		return $this->set_status(2, $email);
-	}	
+	function reject($email = true ){
+		$func_args = func_get_args();
+		$email_args = !empty($func_args[1]) ? $func_args[1] : array();
+		return $this->set_status(2, $email, false, $email_args);
+	}
+	
 	/**
 	 * Unapprove a booking.
+	 * @param $email
+	 * param array $email_args Overloaded
 	 * @return bool
 	 */
-	function unapprove($email = true){
-		return $this->set_status(0, $email);
+	function unapprove( $email = true ){
+		$func_args = func_get_args();
+		$email_args = !empty($func_args[1]) ? $func_args[1] : array();
+		return $this->set_status(0, $email, false, $email_args);
 	}
 	
 	/**
 	 * Change the status of the booking. This will save to the Database too. 
 	 * @param int $status
+	 * @param bool $email
+	 * @param bool $ignore_spaces
+	 * param array $email_args Overloaded
 	 * @return boolean
 	 */
-	function set_status($status, $email = true, $ignore_spaces = false){
+	function set_status($status, $email = true, $ignore_spaces = false ){
 		global $wpdb;
-		$action_string = strtolower($this->status_array[$status]); 
+		$func_args = func_get_args();
+		$email_args = !empty($func_args[3]) ? $func_args[3] : array();
+		$email_args = array_merge( array('email_admin'=> true, 'force_resend' => false, 'email_attendee' => true), $email_args );
+		$action_string = strtolower($this->status_array[$status]);
 		//if we're approving we can't approve a booking if spaces are full, so check before it's approved.
 		if(!$ignore_spaces && $status == 1){
 			if( !$this->is_reserved() && $this->get_event()->get_bookings()->get_available_spaces() < $this->get_spaces() && !get_option('dbem_bookings_approval_overbooking') ){
@@ -1090,7 +1130,7 @@ class EM_Booking extends EM_Object{
 			if( $result && $this->previous_status != $this->booking_status ){ //email if status has changed
 				do_action('em_booking_status_changed', $this, array('status' => $status, 'email' => $email, 'ignore_spaces' => $ignore_spaces)); // method params passed as array
 				if( $email ){
-					if( $this->email() ){
+					if( $this->email( !empty($email_args['email_admin']), !empty($email_args['force_resend']), !empty($email_args['email_attendee'])) ){
 					    if( $this->mails_sent > 0 ){
 					        $this->feedback_message .= " ".__('Email Sent.','events-manager');
 					    }
@@ -1332,6 +1372,28 @@ class EM_Booking extends EM_Object{
 		return $full_result;
 	}
 	
+	public function output_intent_html(){
+		$input = '<input type="hidden" name="booking_intent" value="' . esc_attr($this->booking_uuid) .'" class="em-booking-intent" id="em-booking-intent-'. esc_attr($this->event_id) .'"';
+		foreach( $this->get_intent_data() as $key => $value ){
+			$input .= ' data-'.$key.'="'. esc_attr($value) .'"';
+		}
+		$input .= '>';
+		return apply_filters('em_booking_output_intent_html', $input, $this);
+	}
+	
+	public function get_intent_data(){
+		return array(
+			'uuid' => $this->booking_uuid,
+			'event_id' => $this->event_id,
+			'spaces' => $this->get_spaces(),
+			'amount' => $this->get_price(),
+			'amount_formatted' => $this->get_price( true ),
+			'amount_base' => $this->get_price_base(),
+			'taxes' => $this->get_price_taxes(),
+			'currency' => $this->get_currency(),
+		);
+	}
+	
 	/**
 	 * @param boolean $email_admin
 	 * @param boolean $force_resend
@@ -1341,8 +1403,6 @@ class EM_Booking extends EM_Object{
 	function email( $email_admin = true, $force_resend = false, $email_attendee = true ){
 		$result = true;
 		$this->mails_sent = 0;
-		
-		
 		//Make sure event matches booking, and that booking used to be approved.
 		if( $this->booking_status !== $this->previous_status || $force_resend ){
 			// before we format dates or any other language-specific placeholders, make sure we're translating the site language, not the user profile language in the admin area (e.g. if an admin is sending a booking confirmation email), assuming this isn't a ML-enabled site.
@@ -1353,71 +1413,91 @@ class EM_Booking extends EM_Object{
 			$EM_Event->get_bookings(true); //refresh all bookings
 			//messages can be overridden just before being sent
 			$msg = $this->email_messages();
+			$filter_args = array('email_admin'=> true, 'force_resend' => $force_resend, 'email_attendee' => $email_attendee, 'msg' => $msg );
 
 			//Send user (booker) emails
 			if( !empty($msg['user']['subject']) && $email_attendee ){
-				$msg['user']['subject'] = $this->output($msg['user']['subject'], 'raw');
-				$msg['user']['body'] = $this->output($msg['user']['body'], 'email');
-				$attachments = array();
-				if( !empty($msg['user']['attachments']) && is_array($msg['user']['attachments']) ){
-					$attachments = $msg['user']['attachments'];
-				}
-				//add extra args
-				$args = array();
-				if( get_option('dbem_bookings_replyto_owner') && $this->get_event()->get_contact()->user_email ){
-					$args['reply-to'] = $this->get_event()->get_contact()->user_email;
-					$args['reply-to-name'] = $this->get_event()->get_contact()->display_name;
-				}
-				$args = apply_filters('em_booking_email_user_args', $args, array('email_admin'=> $email_admin, 'force_resend' => $force_resend, 'email_attendee' => $email_attendee, 'msg' => $msg ), $this);
-				//Send to the person booking
-				if( !$this->email_send( $msg['user']['subject'], $msg['user']['body'], $this->get_person()->user_email, $attachments, $args) ){
-					$result = false;
-				}else{
-					$this->mails_sent++;
-				}
+				$result = $this->email_attendee( $msg, $filter_args );
 			}
 			
 			//Send admin/contact emails if this isn't the event owner or an events admin
 			if( $email_admin && !empty($msg['admin']['subject']) ){ //emails won't be sent if admin is logged in unless they book themselves
-				//get admin emails that need to be notified, hook here to add extra admin emails
-				$admin_emails = str_replace(' ','',get_option('dbem_bookings_notify_admin'));
-				$admin_emails = apply_filters('em_booking_admin_emails', explode(',', $admin_emails), $this); //supply emails as array
-				if( get_option('dbem_bookings_contact_email') == 1 && !empty($EM_Event->get_contact()->user_email) ){
-				    //add event owner contact email to list of admin emails
-				    $admin_emails[] = $EM_Event->get_contact()->user_email;
-				}
-				foreach($admin_emails as $key => $email){ if( !is_email($email) ) unset($admin_emails[$key]); } //remove bad emails
-				//add extra args
-				$args = array();
-				if( get_option('dbem_bookings_replyto_owner_admins') && $this->get_event()->get_contact()->user_email ){
-					$args['reply-to'] = $this->get_event()->get_contact()->user_email;
-					$args['reply-to-name'] = $this->get_event()->get_contact()->display_name;
-				}
-				$args = apply_filters('em_booking_email_admin_args', $args, array('email_admin'=> $email_admin, 'force_resend' => $force_resend, 'email_attendee' => $email_attendee, 'msg' => $msg ), $this);
-				//proceed to email admins if need be
-				if( !empty($admin_emails) ){
-					//Only gets sent if this is a pending booking, unless approvals are disabled.
-					$msg['admin']['subject'] = $this->output($msg['admin']['subject'],'raw');
-					$msg['admin']['body'] = $this->output($msg['admin']['body'], 'email');
-					$attachments = array();
-					if( !empty($msg['admin']['attachments']) && is_array($msg['admin']['attachments']) ){
-						$attachments = $msg['admin']['attachments'];
-					}
-					//email admins
-						if( !$this->email_send( $msg['admin']['subject'], $msg['admin']['body'], $admin_emails, $attachments, $args) && current_user_can('manage_options') ){
-							$this->errors[] = __('Confirmation email could not be sent to admin. Registrant should have gotten their email (only admin see this warning).','events-manager');
-							$result = false;
-						}else{
-							$this->mails_sent++;
-						}
-				}
+				$result = $this->email_admins( $msg );
 			}
 			do_action('em_booking_email_after_send', $this);
 			if( !EM_ML::$is_ml && is_admin() ) EM_ML::restore_locale(); // restore the locale back for the rest of the site, which will happen if we switched it earlier
 		}
 		return apply_filters('em_booking_email', $result, $this, $email_admin, $force_resend, $email_attendee);
 		//TODO need error checking for booking mail send
-	}	
+	}
+	
+	function email_attendee( $msg, $filter_args = null ){
+		$result = true;
+		if( !$filter_args ){
+			$filter_args = array('email_admin'=> true, 'force_resend' => true, 'email_attendee' => false, 'msg' => $msg );
+		}
+		$msg['user']['subject'] = $this->output($msg['user']['subject'], 'raw');
+		$msg['user']['body'] = $this->output($msg['user']['body'], 'email');
+		$attachments = array();
+		if( !empty($msg['user']['attachments']) && is_array($msg['user']['attachments']) ){
+			$attachments = $msg['user']['attachments'];
+		}
+		//add extra args
+		$args = array();
+		if( get_option('dbem_bookings_replyto_owner') && $this->get_event()->get_contact()->user_email ){
+			$args['reply-to'] = $this->get_event()->get_contact()->user_email;
+			$args['reply-to-name'] = $this->get_event()->get_contact()->display_name;
+		}
+		$args = apply_filters('em_booking_email_user_args', $args, $filter_args, $this);
+		//Send to the person booking
+		if( !$this->email_send( $msg['user']['subject'], $msg['user']['body'], $this->get_person()->user_email, $attachments, $args) ){
+			$result = false;
+		}else{
+			$this->mails_sent++;
+		}
+		return $result;
+	}
+	
+	function email_admins( $msg, $filter_args = null ){
+		$result = true;
+		$EM_Event = $this->get_event(); //We NEED event details here.
+		if( !$filter_args ){
+			$filter_args = array('email_admin'=> true, 'force_resend' => true, 'email_attendee' => false, 'msg' => $msg );
+		}
+		//get admin emails that need to be notified, hook here to add extra admin emails
+		$admin_emails = str_replace(' ','',get_option('dbem_bookings_notify_admin'));
+		$admin_emails = apply_filters('em_booking_admin_emails', explode(',', $admin_emails), $this); //supply emails as array
+		if( get_option('dbem_bookings_contact_email') == 1 && !empty($EM_Event->get_contact()->user_email) ){
+			//add event owner contact email to list of admin emails
+			$admin_emails[] = $EM_Event->get_contact()->user_email;
+		}
+		foreach($admin_emails as $key => $email){ if( !is_email($email) ) unset($admin_emails[$key]); } //remove bad emails
+		//add extra args
+		$args = array();
+		if( get_option('dbem_bookings_replyto_owner_admins') && $this->get_event()->get_contact()->user_email ){
+			$args['reply-to'] = $this->get_event()->get_contact()->user_email;
+			$args['reply-to-name'] = $this->get_event()->get_contact()->display_name;
+		}
+		$args = apply_filters('em_booking_email_admin_args', $args, $filter_args, $this);
+		//proceed to email admins if need be
+		if( !empty($admin_emails) ){
+			//Only gets sent if this is a pending booking, unless approvals are disabled.
+			$msg['admin']['subject'] = $this->output($msg['admin']['subject'],'raw');
+			$msg['admin']['body'] = $this->output($msg['admin']['body'], 'email');
+			$attachments = array();
+			if( !empty($msg['admin']['attachments']) && is_array($msg['admin']['attachments']) ){
+				$attachments = $msg['admin']['attachments'];
+			}
+			//email admins
+			if( !$this->email_send( $msg['admin']['subject'], $msg['admin']['body'], $admin_emails, $attachments, $args) && current_user_can('manage_options') ){
+				$this->errors[] = __('Confirmation email could not be sent to admin. Registrant should have gotten their email (only admin see this warning).','events-manager');
+				$result = false;
+			}else{
+				$this->mails_sent++;
+			}
+		}
+		return $result;
+	}
 	
 	function email_messages(){
 		$msg = array( 'user'=> array('subject'=>'', 'body'=>'', 'attachments' => array()), 'admin'=> array('subject'=>'', 'body'=>'', 'attachments' => array())); //blank msg template
