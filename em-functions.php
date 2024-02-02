@@ -269,6 +269,7 @@ function em_get_currency_formatted($price, $currency=false, $format=false, $prec
 	$formatted_price = '';
 	if(!$format) $format = get_option('dbem_bookings_currency_format','@#');
 	if(!$currency) $currency = get_option('dbem_bookings_currency');
+	if( empty($price) ) $price = 0;
 	$formatted_price = str_replace('#', number_format( $price, $precision, get_option('dbem_bookings_currency_decimal_point','.'), get_option('dbem_bookings_currency_thousands_sep',',') ), $format);
 	$formatted_price = str_replace('@', em_get_currency_symbol(true,$currency), $formatted_price);
 	return apply_filters('em_get_currency_formatted', $formatted_price, $price, $currency, $format);
@@ -603,6 +604,8 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	$search_args['search_text_show'] = get_option('dbem_search_form_advanced_show'); // deprecated
 	$search_args['search_text_hide'] = get_option('dbem_search_form_advanced_hide'); // deprecated
 	$search_args['search_button'] = get_option('dbem_search_form_submit');
+	// sorting options
+	$search_args['sorting'] = get_option('dbem_search_form_sorting'); // is sorting enabled
 	//search text
 	$search_args['search'] = ''; //default search term
 	$search_args['search_term'] = $search_args['search_term_main'] = get_option('dbem_search_form_text');
@@ -747,6 +750,7 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	$main_search_count = 0; // number of search fields
 	$args['css_classes'][] = $args['show_main'] ? 'has-search-main':'no-search-main';
 	$args['css_classes'][] = !empty($args['views']) && count($args['views']) > 1 ? 'has-views':'no-views';
+	$args['css_classes'][] = $args['sorting'] ? 'has-sorting':'no-sorting';
 	$args['css_classes'][] = $args['show_advanced'] ? 'has-advanced':'no-advanced';
 	if( $args['show_advanced'] ){
 		$args['css_classes'][] = 'advanced-mode-' . $args['advanced_mode'];
@@ -1024,16 +1028,22 @@ function em_checkbox_items($name, $array, $saved_values, $horizontal = true) {
 	echo $output;
 
 }
-function em_options_input_text($title, $name, $description ='', $default='', $resetable = false) {
-    $translate = EM_ML::is_option_translatable($name);
-    if( preg_match('/^([^\[]+)\[([^\]]+)?\]$/', $name, $matches) ){
-    	$value = EM_Options::get($matches[2], $default, $matches[1]);
-    }elseif( preg_match('/^([^\[]+)\[([^\]]+)\]\[([^\]]+)?\]$/', $name, $matches) ){
+
+function em_options_input_get_value( $name, $default = '' ){
+	if( preg_match('/^([^\[]+)\[([^\]]+)?\]$/', $name, $matches) ){
+		$value = EM_Options::get($matches[2], $default, $matches[1]);
+	}elseif( preg_match('/^([^\[]+)\[([^\]]+)\]\[([^\]]+)?\]$/', $name, $matches) ){
 		$value_array = EM_Options::get($matches[2], array(), $matches[1]);
 		$value = isset($value_array[$matches[3]]) ? $value_array[$matches[3]]:$default;
 	}else{
-        $value = get_option($name, $default);
-    }
+		$value = get_option($name, $default);
+	}
+	return $value;
+}
+
+function em_options_input_text($title, $name, $description ='', $default='', $resetable = false) {
+    $translate = EM_ML::is_option_translatable($name);
+	$value = em_options_input_get_value( $name, $default );
 	?>
 	<tr valign="top" id='<?php echo esc_attr($name);?>_row'>
 		<th scope="row">
@@ -1075,11 +1085,12 @@ function em_options_input_text($title, $name, $description ='', $default='', $re
 }
 
 function em_options_input_password($title, $name, $description ='') {
+	$value = em_options_input_get_value( $name );
 	?>
 	<tr valign="top" id='<?php echo esc_attr($name);?>_row'>
 		<th scope="row"><?php echo esc_html($title); ?></th>
 	    <td>
-			<input name="<?php echo esc_attr($name) ?>" type="password" id="<?php echo esc_attr($title) ?>" style="width: 95%" value="<?php echo esc_attr(get_option($name)); ?>" size="45" /><br />
+			<input name="<?php echo esc_attr($name) ?>" type="password" id="<?php echo esc_attr($title) ?>" style="width: 95%" value="<?php echo esc_attr($value); ?>" size="45" /><br />
 			<em><?php echo $description; ?></em>
 		</td>
 	</tr>

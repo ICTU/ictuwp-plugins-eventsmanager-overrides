@@ -68,6 +68,10 @@ class EM_Bookings_Table extends EM\List_Table {
 	public $bookings;
 	public $bookings_count = 0;
 	
+	public $person;
+	public $event;
+	public $item_type;
+	
 	function __construct($show_tickets = true){
 		$this->uid = $this->id . '-' . rand(1,99999);
 		$this->statuses = array(
@@ -115,6 +119,7 @@ class EM_Bookings_Table extends EM\List_Table {
 			'dbem_phone'=>__('Phone Number','events-manager'),
 			'booking_spaces'=>__('Spaces','events-manager'),
 			'booking_status'=>__('Status','events-manager'),
+			'booking_rsvp_status'=>__('RSVP Status','events-manager'),
 			'booking_date'=>__('Booking Date','events-manager'),
 			'booking_price'=>__('Total','events-manager'),
 			'booking_id'=>__('Booking ID','events-manager'),
@@ -581,6 +586,7 @@ class EM_Bookings_Table extends EM\List_Table {
 										?><td class="em-bt-col-<?php echo esc_attr($key); ?>"class="em-bt-col-<?php echo esc_attr($key); ?>"><?php echo $row_cell; ?></td><?php
 										}
 										$this->ticket = null;
+										$count++;
 									}
 								}else{
 									$row = $this->get_row($EM_Booking);
@@ -888,6 +894,8 @@ class EM_Bookings_Table extends EM\List_Table {
 			$val = $EM_Booking->get_price(true);
 		}elseif($col == 'booking_status'){
 			$val = $EM_Booking->get_status(true);
+		} elseif ( $col == 'booking_rsvp_status' ) {
+			$val = $EM_Booking->get_rsvp_status( true );
 		}elseif($col == 'booking_date'){
 			$val = $EM_Booking->date()->i18n( get_option('dbem_date_format').' '. get_option('dbem_time_format') );
 		}elseif($col == 'actions' && $format !== 'csv' ) {
