@@ -22,12 +22,18 @@ function em_data_privacy_consent_checkbox( $EM_Object = false ){
     if( empty($checked) && !empty($_REQUEST['data_privacy_consent']) ) $checked = true;
     // output checkbox
 	?>
-    <p class="input-group input-checkbox input-field-data_privacy_consent">
-		<label>
-			<input type="checkbox" name="data_privacy_consent" value="1" <?php if( !empty($checked) ) echo 'checked="checked"'; ?>>
+    <p class="input-group form__field-wrapper--required input-field-data_privacy_consent">
+		<label class="form__label" for="data_privacy_consent">
+		<?php echo sprintf(
+			'%s<span class="form__required-asterisk">* <span class="visually-hidden">%s</span></span></label>',
+			_x( 'Toestemming', 'Required fields: required consent', 'gctheme' ),
+			_x( 'Verplicht', 'Required fields: required text', 'gctheme' ),
+		);?>
+		</label>
+		<label class="form__label" for="data_privacy_consent">
+			<input type="checkbox" id="data_privacy_consent" name="data_privacy_consent" value="1" <?php if( !empty($checked) ) echo 'checked="checked"'; ?>>
 			<?php echo $label; ?>
 		</label>
-        <br style="clear:both;">
 	</p>
 	<?php
 }
