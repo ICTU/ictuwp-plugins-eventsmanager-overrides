@@ -1,5 +1,5 @@
-<?php  
-/* 
+<?php
+/*
  * This is where the booking form is generated.
  * For non-advanced users, It's SERIOUSLY NOT recommended you edit this form directly if avoidable, as you can change booking form settings in various less obtrusive and upgrade-safe ways:
  * - check your booking form options panel in the Booking Options tab in your settings.
@@ -20,6 +20,13 @@
 /* @var bool $already_booked */
 
 global $EM_Notices;
+
+// @NOTE: GC override
+// ------------------
+$gc_show_tickets_section = function_exists( 'gc_show_tickets_section' ) ? gc_show_tickets_section() : false;
+$show_tickets            = $gc_show_tickets_section;
+// ------------------
+// END: GC override
 
 // first hook before anything is checked
 do_action('em_booking_form_start', $EM_Event); // do not delete
@@ -43,7 +50,7 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 			// create a booking intent
 			echo $EM_Notices;
 		?>
-		<?php 
+		<?php
 		if( !is_user_logged_in() && get_option('dbem_bookings_login_form') ){
 			//User is not logged in, show login form (enabled on settings page)
 			em_locate_template('forms/bookingform/login.php',true, array('EM_Event'=>$EM_Event));
@@ -63,6 +70,7 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 				 */
 				?>
 				<?php do_action('em_booking_form_before_tickets_section', $EM_Event, $EM_Booking); // do not delete ?>
+				<?php /* @NOTE: GC override */ if ( $gc_show_tickets_section ) : ?>
 				<section class="em-booking-form-section-tickets" id="em-booking-form-section-tickets-<?php echo $id; ?>">
 					<?php if( get_option('dbem_bookings_header_tickets') ): ?>
 				    <h3 class="em-booking-section-title em-booking-form-tickets-title"><?php echo esc_html(get_option('dbem_bookings_header_tickets')); ?></h3>
@@ -73,7 +81,7 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 						if( $show_tickets && ($can_book || get_option('dbem_bookings_tickets_show_loggedout')) ){ //show if more than 1 ticket, or if in forced ticket list view mode
 							do_action('em_booking_form_before_tickets', $EM_Event, $EM_Booking); // do not delete
 							//Show multiple tickets form to user, or single ticket list if settings enable this
-							
+
 							if ( $available_tickets_count == 1 && !get_option('dbem_bookings_tickets_single_form')) {
 								$EM_Ticket = $EM_Event->get_bookings()->get_available_tickets()->get_first();
 								em_locate_template('forms/bookingform/ticket-single.php', true, array('EM_Event' => $EM_Event, 'EM_Ticket' => $EM_Ticket, 'id' => $id));
@@ -87,8 +95,9 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 					?>
 					</div>
 				</section>
+				<?php /* @NOTE: END GC override */ endif; ?>
 				<?php do_action('em_booking_form_after_tickets_section', $EM_Event, $EM_Booking); // do not delete ?>
-				
+
 				<?php if( $can_book ): ?>
 					<?php
 					/*
@@ -120,7 +129,7 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 						</div>
 					</section>
 					<?php do_action('em_booking_form_after_registration_info', $EM_Event, $EM_Booking); // do not delete ?>
-					
+
 					<?php
 					/*
 					 * BOOKING SUMMARY
@@ -179,7 +188,7 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 					<p class="em-booking-form-details"><?php echo get_option('dbem_booking_feedback_log_in'); ?></p>
 				<?php endif; ?>
 				<?php do_action('em_booking_form_bottom', $EM_Event, $EM_Booking); // do not delete ?>
-			</form>  
+			</form>
 		<?php endif; ?>
 	<?php endif; ?>
 	<?php do_action('em_booking_form_after_form', $EM_Event, $EM_Booking); // do not delete ?>
