@@ -108,7 +108,8 @@ class EM_Event_Post {
 	 */
 	public static function get_the_excerpt($content){
 		global $post;
-		if( $post->post_type == EM_POST_TYPE_EVENT ){
+		if ( ! $post ) return $content;
+		if( property_exists( $post, 'post_type' ) && $post->post_type == EM_POST_TYPE_EVENT ){
 			$EM_Event = em_get_event($post);
 			$output = !empty($EM_Event->post_excerpt) ? get_option('dbem_event_excerpt_format'):get_option('dbem_event_excerpt_alt_format');
 			$content = $EM_Event->output($output);
