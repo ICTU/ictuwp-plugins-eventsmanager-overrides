@@ -5,6 +5,7 @@
  */
 function em_data_privacy_consent_checkbox( $EM_Object = false ){
 	if( !empty($EM_Object) && (!empty($EM_Object->booking_id) || !empty($EM_Object->post_id)) ) return; //already saved so consent was given at one point
+	if( !doing_action('em_booking_form_after_user_details') && did_action('em_booking_form_after_user_details') ) return; // backcompat
 	$label = get_option('dbem_data_privacy_consent_text');
 	// buddyboss fix since bb v1.6.0
 	if( has_filter( 'the_privacy_policy_link', 'bp_core_change_privacy_policy_link_on_private_network') ) $bb_fix = remove_filter('the_privacy_policy_link', 'bp_core_change_privacy_policy_link_on_private_network', 999999);
@@ -21,20 +22,51 @@ function em_data_privacy_consent_checkbox( $EM_Object = false ){
     if( empty($checked) && !empty($_REQUEST['data_privacy_consent']) ) $checked = true;
     // output checkbox
 	?>
-    <p class="input-group input-checkbox input-field-data_privacy_consent">
-		<label>
-			<input type="checkbox" name="data_privacy_consent" value="1" <?php if( !empty($checked) ) echo 'checked="checked"'; ?>>
+    <fieldset class="input-group form__field-wrapper--required input-field-data_privacy_consent">
+		<legend class="form__label">
+		<?php echo sprintf(
+			'%s<span class="form__required-asterisk">* <span class="visually-hidden">%s</span></span></label>',
+			_x( 'Toestemming', 'Required fields: required consent', 'gctheme' ),
+			_x( 'Verplicht', 'Required fields: required text', 'gctheme' ),
+		);?>
+		</legend>
+		<?php
+		// Output a link to the privacy page, if available.
+		// Note: Simplest is get_the_privacy_policy_link(), which returns full hyperlink markup.
+		// However, we use: get_privacy_policy_url() (URL only, no markup)
+		// to be able to construct complete custom output
+		// (as per: https://documentatie.vercel.app/richtlijnen/formulieren/links#groeperen-met-een-fieldset-en-de-informatie-koppelen-aan-het-formulierveld-met-een-aria-describedby.)
+		$pp_link_url   = get_privacy_policy_url();
+		$pp_link_descr = _x( 'Wij hebben jouw toestemming nodig om enkele gegevens op te slaan. Lees onze %s.', 'Privacy policy link: description', 'gctheme' );
+		$pp_link_title = _x( 'privacyverklaring (opent in een nieuw venster)', 'Privacy policy link: title', 'gctheme' );
+
+		if ( $pp_link_url && $pp_link_title ) {
+			// Construct custom privacy policy link output
+			$pp_link = sprintf(
+				'<a class="privacy-policy-link" href="%s" rel="privacy-policy" target="_blank">%s</a>',
+				esc_url( $pp_link_url ),
+				esc_html( $pp_link_title ),
+			);
+		}
+		if ( $pp_link && $pp_link_descr ) {
+			// Construct custom privacy policy paragraph
+			$pp_link_descr = sprintf( $pp_link_descr, $pp_link );
+			echo sprintf( '<p id="pp-info" class="privacy-policy-link-info">%s</p>', $pp_link_descr );
+		}
+		?>
+		<label class="form__label" for="data_privacy_consent">
+			<input aria-describedby="pp-info" type="checkbox" id="data_privacy_consent" name="data_privacy_consent" value="1" <?php if( !empty($checked) ) echo 'checked="checked"'; ?>>
 			<?php echo $label; ?>
 		</label>
-        <br style="clear:both;">
-	</p>
+	</fieldset>
 	<?php
 }
 
 function em_data_privacy_consent_hooks(){
 	//BOOKINGS
 	if( get_option('dbem_data_privacy_consent_bookings') == 1 || ( get_option('dbem_data_privacy_consent_bookings') == 2 && !is_user_logged_in() ) ){
-	    add_action('em_booking_form_footer', 'em_data_privacy_consent_checkbox', 9, 0); //supply 0 args since arg is $EM_Event and callback will think it's an event submission form
+		add_action('em_booking_form_footer', 'em_data_privacy_consent_checkbox', 9, 0); //supply 0 args since arg is $EM_Event and callback will think it's an event submission form
+	    add_action('em_booking_form_after_user_details', 'em_data_privacy_consent_checkbox', 9, 0); //supply 0 args since arg is $EM_Event and callback will think it's an event submission form
 		add_filter('em_booking_get_post', 'em_data_privacy_consent_booking_get_post', 10, 2);
 		add_filter('em_booking_validate', 'em_data_privacy_consent_booking_validate', 10, 2);
 		add_filter('em_booking_save', 'em_data_privacy_consent_booking_save', 10, 2);
