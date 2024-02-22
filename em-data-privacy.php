@@ -25,7 +25,7 @@ function em_data_privacy_consent_checkbox( $EM_Object = false ){
     <fieldset class="input-group form__field-wrapper--required input-field-data_privacy_consent">
 		<legend class="form__label">
 		<?php echo sprintf(
-			'%s<span class="form__required-asterisk">* <span class="visually-hidden">%s</span></span></label>',
+			'%s <span class="form__required-asterisk">* <span class="visually-hidden">%s</span></span></label>',
 			_x( 'Toestemming', 'Required fields: required consent', 'gctheme' ),
 			_x( 'Verplicht', 'Required fields: required text', 'gctheme' ),
 		);?>
