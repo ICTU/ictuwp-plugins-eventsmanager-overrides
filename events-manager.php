@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name:    Events Manager (ICTU WP corrections)
-Version: 9999.5
+Version: 9999.6
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // Setting constants
-define('EM_VERSION', '9999.5'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_VERSION', '9999.6'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
 define('EM_PRO_MIN_VERSION', '3.0'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.0'); //self expanatory
 define('EM_DIR', dirname( __FILE__ )); //an absolute path to this directory
@@ -201,7 +201,7 @@ if( file_exists($upload_dir['basedir'].'/locations-pics' ) ){
  */
 class EM_Loader {
 	public static $oauth = false;
-	
+
 	public static function oauth(){
 		require_once('classes/em-oauth/oauth-api.php');
 		add_action('em_enqueue_admin_styles', function(){
@@ -216,10 +216,10 @@ class EM_Loader {
  * Contains functions for loading styles on both admin and public sides.
  */
 class EM_Scripts_and_Styles {
-	
+
 	public static $locale;
 	public static $localize_flatpickr;
-	
+
 	public static function init(){
 		if( is_admin() ){
 			//Scripts and Styles
@@ -230,7 +230,7 @@ class EM_Scripts_and_Styles {
 		}
 		static::$locale = substr(get_locale(), 0, 2);
 	}
-	
+
 	public static function register(){
 		// register scripts - empty for now (removed em-select in favour of direct inclusion in events-manager.js)
 		do_action('em_scripts_and_styles_register');
@@ -257,7 +257,7 @@ class EM_Scripts_and_Styles {
 		}elseif( !empty( $obj->ID ) ){
 			$obj_id = $obj->ID;
 		}
-		
+
 	    //Decide whether or not to include certain JS files and dependencies
 	    $script_deps = array();
         if( get_option('dbem_js_limit') ){
@@ -265,7 +265,7 @@ class EM_Scripts_and_Styles {
             if( is_page($pages) ){
                 $script_deps['jquery'] = 'jquery';
             }
-            if( (!empty($pages['events']) && is_page($pages['events']) && ( get_option('dbem_events_page_search_form') || (EM_MS_GLOBAL && !get_site_option('dbem_ms_global_events_links', true)) )) || get_option('dbem_js_limit_search') === '0' || in_array($obj_id, explode(',', get_option('dbem_js_limit_search')))  ){ 
+            if( (!empty($pages['events']) && is_page($pages['events']) && ( get_option('dbem_events_page_search_form') || (EM_MS_GLOBAL && !get_site_option('dbem_ms_global_events_links', true)) )) || get_option('dbem_js_limit_search') === '0' || in_array($obj_id, explode(',', get_option('dbem_js_limit_search')))  ){
                 //events page only needs datepickers
                 $script_deps['jquery-ui-core'] = 'jquery-ui-core';
                 $script_deps['jquery-ui-datepicker'] = 'jquery-ui-datepicker';
@@ -335,7 +335,7 @@ class EM_Scripts_and_Styles {
 			static::enqueue_public_styles();
 		}
 	}
-	
+
 	public static function inline_enqueue(){
 		// check if we want to override our theme basic styles as per styling options
 		if( get_option('dbem_css_theme') ){
@@ -349,7 +349,7 @@ class EM_Scripts_and_Styles {
 			}
 		}
 	}
-	
+
 	public static function admin_enqueue( $hook_suffix = false ){
 		if( $hook_suffix == 'post.php' || $hook_suffix === true || (!empty($_GET['page']) && substr($_GET['page'],0,14) == 'events-manager') || (!empty($_GET['post_type']) && in_array($_GET['post_type'], array(EM_POST_TYPE_EVENT,EM_POST_TYPE_LOCATION,'event-recurring'))) ){
 			if( $hook_suffix == 'post.php' && empty($_GET['post_type']) && !empty($_GET['post']) ){
@@ -371,13 +371,13 @@ class EM_Scripts_and_Styles {
 			}
 		}
 	}
-	
+
 	public static function enqueue_public_styles( $deps = array(), $min = true ){
 		$min = static::get_minified_extension( $min );
 		wp_enqueue_style('events-manager', plugins_url('includes/css/events-manager' . $min . '.css', __FILE__), $deps, EM_VERSION); //main css
 		do_action('em_enqueue_styles', $deps, $min);
 	}
-	
+
 	public static function enqueue_scripts( $deps = null, $min = true ){
 		$min = static::get_minified_extension( $min );
 		if( $deps === null ){
@@ -392,17 +392,17 @@ class EM_Scripts_and_Styles {
 		self::localize_script();
 		do_action('em_enqueue_scripts', $deps, $min);
 	}
-	
+
 	public static function enqueue_admin_styles( $deps = array(), $min = true ){
 		$min = static::get_minified_extension( $min );
 		wp_enqueue_style('events-manager-admin', plugins_url('includes/css/events-manager-admin'.$min.'.css',__FILE__), $deps, EM_VERSION);
 		do_action('em_enqueue_admin_styles', $deps, $min);
 	}
-	
+
 	public static function get_minified_extension( $minified = true ){
 		return ( !$minified || defined( 'WP_DEBUG' ) && WP_DEBUG ) || ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) || ( defined( 'EM_DEBUG' ) && EM_DEBUG ) ? '' : '.min';
 	}
-	
+
 	/**
 	 * Returns an optional suffix to use in CSS/JS enqueueing, which is .min if in production mode
 	 *
@@ -513,7 +513,7 @@ class EM_Scripts_and_Styles {
 		$em_localized_js['txt_search'] = get_option('dbem_search_form_text_label',__('Search','events-manager'));
 		$em_localized_js['txt_searching'] = __('Searching...','events-manager');
 		$em_localized_js['txt_loading'] = __('Loading...','events-manager');
-		
+
 		//logged in messages that visitors shouldn't need to see
 		if( is_user_logged_in() || is_page(get_option('dbem_edit_events_page')) ){
 		    if( get_option('dbem_recurrence_enabled') ){
@@ -599,7 +599,7 @@ function em_plugins_loaded(){
 	//WPFC Integration
 	if( defined('WPFC_VERSION') ){
 		function load_em_wpfc_plugin(){
-			if( !function_exists('wpfc_em_init') ) include('em-wpfc.php');	
+			if( !function_exists('wpfc_em_init') ) include('em-wpfc.php');
 		}
 		add_action('init', 'load_em_wpfc_plugin', 200);
 	}
@@ -996,7 +996,7 @@ class EM_Formats {
 	 * @var string Name of filter for other plugins to override, should be overriden also by extending class
 	 */
 	protected static $formats_filter = 'em_formats_filter';
-	
+
 	public static function init(){
 		add_action( 'template_redirect', 'EM_Formats::add_filters');
 	}
@@ -1008,14 +1008,14 @@ class EM_Formats {
 			add_filter('pre_option_'.$format_name, 'EM_Formats::'. $format_name, 1,1);
 		}
 	}
-	
+
 	public static function remove_filters( $get_all = false ){
 		$formats = apply_filters(static::$formats_filter, static::get_default_formats($get_all));
 		foreach( $formats as $format_name ){
 			remove_filter('pre_option_'.$format_name, 'EM_Formats::'. $format_name, 1);
 		}
 	}
-	
+
 	/**
 	 * Intercepts the pre_option_ hooks and check if we have a php file format verion, if so that content is supplied.
 	 * @param string $name
@@ -1037,11 +1037,11 @@ class EM_Formats {
 		static::$loaded_formats[$name] = $value;
 		return $value;
 	}
-	
+
 	public static function locate_template($template){
 		return em_locate_template( $template );
 	}
-	
+
 	public static function get_email_format( $format_name ){
 		$format_name = preg_replace('/^dbem_/', '', $format_name);
 		if( !preg_match('/\.php$/', $format_name) ){
@@ -1055,7 +1055,7 @@ class EM_Formats {
 		}
 		return '';
 	}
-	
+
 	/**
 	 * @return mixed|void
 	 */
@@ -1138,7 +1138,7 @@ class EM_Formats {
 		);
 		return apply_filters('em_formats_formatting_modes_map', $formatting_modes_map);
 	}
-	
+
 	public static function get_default_formats( $get_all = false ){
 		$default_formats = array();
 		$formatting_modes_map = static::get_formatting_modes_map();
@@ -1247,7 +1247,7 @@ function em_deactivate() {
 register_deactivation_hook( __FILE__,'em_deactivate');
 
 /**
- * Fail-safe compatibility checking of EM Pro 
+ * Fail-safe compatibility checking of EM Pro
  */
 function em_check_pro_compatability(){
 	if( defined('EMP_VERSION') && EMP_VERSION < EM_PRO_MIN_VERSION_CRITICAL && (!defined('EMP_DISABLE_CRITICAL_WARNINGS') || !EMP_DISABLE_CRITICAL_WARNINGS) ){

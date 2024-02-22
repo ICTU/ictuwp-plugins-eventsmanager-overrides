@@ -18,7 +18,7 @@ echo 'em-events.php: Change replace method';
 sed -i '.bak' "s|\$content = str_replace('CONTENTS',\$content,\$page_content)|\$content = preg_replace( '/CONTENTS/', \$page_content, \$content )|g" 'em-events.php';
 
 ## ===================================================================================================================
-## PAGINERING / PAGINATION 
+## PAGINERING / PAGINATION
 echo 'em-functions.php: Pagination';
 sed -i '.bak' "s|return apply_filters('em_paginate', '<span class=\"em-pagination\" '.\$data_atts.'>'.\$string.'</span>')|return apply_filters('em_paginate', '<nav class=\"em-pagination\" '.\$data_atts.'>'.\$string.'</nav>')|g" 'em-functions.php';
 
@@ -97,8 +97,8 @@ sed -i '.bak' "s|add_filter(\'pre_set_site_transient_update_plugins|\/\/ add_fil
 
 echo 'events-manager.php: Assign stoopid high version number';
 cd '/Users/paul/shared-paul-files/Webs/git-repos/ictuwp-plugins-eventsmanager-overrides/ictuwp-plugins-eventsmanager-overrides/';
-sed -i '.bak' "s|EM_VERSION', \'6.|EM_VERSION', \'999.|g" 'events-manager.php';
-sed -i '.bak' "s|Version: 6.|Version: 999.|g" 'events-manager.php';
+sed -i '.bak' "s|EM_VERSION', \'6.|EM_VERSION', \'9999.|g" 'events-manager.php';
+sed -i '.bak' "s|Version: 6.|Version: 9999.|g" 'events-manager.php';
 
 # remove .bak files
 find . -name '*.bak' -type f -delete
