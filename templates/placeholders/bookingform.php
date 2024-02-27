@@ -21,10 +21,9 @@
 
 global $EM_Notices;
 
-// @NOTE: GC override
+// @NOTE: GC override: add inline `hidden` to tickets section?
 // ------------------
 $gc_show_tickets_section = function_exists( 'gc_show_tickets_section' ) ? gc_show_tickets_section() : false;
-$show_tickets            = $gc_show_tickets_section;
 // ------------------
 // END: GC override
 
@@ -70,8 +69,8 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 				 */
 				?>
 				<?php do_action('em_booking_form_before_tickets_section', $EM_Event, $EM_Booking); // do not delete ?>
-				<?php /* @NOTE: GC override */ if ( $gc_show_tickets_section ) : ?>
-				<section class="em-booking-form-section-tickets" id="em-booking-form-section-tickets-<?php echo $id; ?>">
+				<?php /* @NOTE: GC override: add inline `hidden` */ ?>
+				<section <?php if ( !$gc_show_tickets_section ) { echo 'hidden'; } ?> class="em-booking-form-section-tickets" id="em-booking-form-section-tickets-<?php echo $id; ?>">
 					<?php if( get_option('dbem_bookings_header_tickets') ): ?>
 				    <h3 class="em-booking-section-title em-booking-form-tickets-title"><?php echo esc_html(get_option('dbem_bookings_header_tickets')); ?></h3>
 					<?php endif; ?>
@@ -95,7 +94,6 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 					?>
 					</div>
 				</section>
-				<?php /* @NOTE: END GC override */ endif; ?>
 				<?php do_action('em_booking_form_after_tickets_section', $EM_Event, $EM_Booking); // do not delete ?>
 
 				<?php if( $can_book ): ?>
