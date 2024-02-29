@@ -144,14 +144,20 @@ var em_booking_form_add_message = function( booking_form, content = null, opts =
 	 */
 	if( content !== null ) {
 		let div = document.createElement('div');
-		// div.classList.add('em-booking-message', 'em-booking-message-' + options.type );
-		div.classList.add('form__message', 'form__message--success', 'em-booking-message', 'em-booking-message-' + options.type );
-		// div.innerHTML = content;
-		// GC: add header, and add content to that
-		let hed = document.createElement('div');
-		hed.classList.add('form__message__header' );
-		hed.innerHTML = content;
-		div.insertBefore( hed, div.firstChild );
+		if ( options.type === 'success' ) {
+			div.classList.add('form__message', 'form__message--success', 'em-booking-message', 'em-booking-message-' + options.type );
+			div.setAttribute('role', 'alert');
+			div.setAttribute('aria-live', 'polite');
+			// GC: add header, and add content to that
+			let hed = document.createElement('div');
+			hed.classList.add('form__message__header' );
+			hed.innerHTML = content;
+			div.insertBefore( hed, div.firstChild );
+		} else {
+			// Default (previous) behavior
+			div.classList.add('em-booking-message', 'em-booking-message-' + options.type );
+			div.innerHTML = content;
+		}
 
 		booking_form.parentElement.insertBefore( div, booking_form );
 	}
