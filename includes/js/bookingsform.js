@@ -687,12 +687,6 @@ var em_booking_form_submit_finally = function( booking_form, opts = {} ){
 			field.setAttribute('aria-describedby', `${field.id}_msg`);
 
 			let group = isUserField ? fieldParent : fieldParent.closest(isChoice ? 'fieldset' : '.input-group');
-			// console.log(
-			// 	fieldType,
-			// 	isChoice,
-			// 	fieldParent,
-			// 	group
-			// );
 			if (!group) {
 				if (fieldType == 'checkbox') {
 					group = fieldParent;
@@ -711,12 +705,15 @@ var em_booking_form_submit_finally = function( booking_form, opts = {} ){
 				}
 			}
 			// Construct inline field error, next to label
-			let warning = document.createElement('span');
-			// TODO: change gfield...
-			warning.classList.add('gfield_description','validation_message');
-			warning.setAttribute('id', `${field.id}_msg`);
-			warning.innerHTML = e.textContent;
-			label.parentNode.insertBefore(warning, label.nextSibling);
+			// but only 1
+			if (!document.getElementById(`${field.id}_msg`)) {
+				let warning = document.createElement('span');
+				// TODO: change gfield...
+				warning.classList.add('gfield_description','validation_message');
+				warning.setAttribute('id', `${field.id}_msg`);
+				warning.innerHTML = e.textContent;
+				label.parentNode.insertBefore(warning, label.nextSibling);
+			}
 		});
 		// console.log( errors );
 	}
