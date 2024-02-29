@@ -136,10 +136,23 @@ var em_booking_form_add_message = function( booking_form, content = null, opts =
 	}
 
 	// add message
+	/**
+	 * @NOTE: GC Override
+	 * We add some markup/classnames we need to properly
+	 * style the Success message.
+	 * The error-messages are all changed in em-notices.php
+	 */
 	if( content !== null ) {
 		let div = document.createElement('div');
-		div.classList.add('em-booking-message', 'em-booking-message-' + options.type );
-		div.innerHTML = content;
+		// div.classList.add('em-booking-message', 'em-booking-message-' + options.type );
+		div.classList.add('form__message', 'form__message--success', 'em-booking-message', 'em-booking-message-' + options.type );
+		// div.innerHTML = content;
+		// GC: add header, and add content to that
+		let hed = document.createElement('div');
+		hed.classList.add('form__message__header' );
+		hed.innerHTML = content;
+		div.insertBefore( hed, div.firstChild );
+
 		booking_form.parentElement.insertBefore( div, booking_form );
 	}
 

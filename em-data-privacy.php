@@ -135,7 +135,10 @@ function em_data_privacy_consent_booking_validate( $result, $EM_Booking ){
 		if( !empty($consent_given_already) && get_option('dbem_data_privacy_consent_remember') == 1 ) return $result; //ignore if consent given as per settings
 	}
     if( empty($EM_Booking->booking_meta['consent']) ){
-	    $EM_Booking->add_error( sprintf(__('You must allow us to collect and store your data in order for us to process your booking.', 'events-manager')) );
+		// @NOTE: GC override link to field
+	    // $EM_Booking->add_error( sprintf(__('You must allow us to collect and store your data in order for us to process your booking.', 'events-manager')) );
+		$this_err = sprintf(__('You must allow us to collect and store your data in order for us to process your booking.', 'events-manager'));
+		$EM_Booking->add_error('<a href="#data_privacy_consent">Toestemming: ' . $this_err . '</a>');
 	    $result = false;
     }
     return $result;
