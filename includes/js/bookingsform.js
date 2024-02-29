@@ -510,6 +510,25 @@ var em_booking_form_submit = function( booking_form, opts = {} ){
 }
 
 var em_booking_form_submit_start = function( booking_form ){
+	// GC: overrides
+	// Try and show all inline error messages based on displayed
+	// error messages.
+
+	// first: clear all existing error attributes/inline messages
+	// from all form fields...
+	Array.from(booking_form.querySelectorAll('.has-error')).forEach( el => {
+		el.classList.remove('has-error');
+		let field = el.querySelector('[aria-invalid]');
+		if (field) {
+			field.removeAttribute('aria-invalid');
+			field.removeAttribute('aria-describedby');
+			let msg = document.getElementById(`${field.id}_msg`);
+			if (msg) {
+				msg.remove();
+			}
+		}
+	});
+
 	document.querySelectorAll('.em-booking-message').forEach( message => message.remove() );
 	em_booking_form_show_spinner( booking_form );
 	let booking_intent = booking_form.querySelector('input.em-booking-intent');
@@ -645,6 +664,61 @@ var em_booking_form_submit_finally = function( booking_form, opts = {} ){
 	}
 	if( options.showForm === true ) {
 		em_booking_form_unhide_success( booking_form, opts );
+	}
+
+	// GC: overrides
+	// Try and show all inline error messages based on displayed
+	// error messages.
+
+	// Now add the attribute on currently invalid
+	const errorMessage = document.querySelector('.form__message--error');
+	if (errorMessage) {
+		let errors = errorMessage.querySelectorAll('li a');
+		Array.from(errors).forEach( e => {
+			let field = document.getElementById(e.getAttribute('href').replace('#', ''));
+			if (!field) return;
+
+			let fieldType    = field.getAttribute('type');
+			let isChoice    = fieldType == 'radio' || fieldType == 'checkbox';
+			let fieldParent  = field.parentNode;
+			let isUserField = fieldParent.classList.contains('input-user-field');
+
+			field.setAttribute('aria-invalid', 'true');
+			field.setAttribute('aria-describedby', `${field.id}_msg`);
+
+			let group = isUserField ? fieldParent : fieldParent.closest(isChoice ? 'fieldset' : '.input-group');
+			// console.log(
+			// 	fieldType,
+			// 	isChoice,
+			// 	fieldParent,
+			// 	group
+			// );
+			if (!group) {
+				if (fieldType == 'checkbox') {
+					group = fieldParent;
+				} else {
+					return;
+				}
+			}
+
+			group.classList.add('has-error');
+			let label = group.querySelector((isUserField ? 'label' : '.form__label'));
+			if (!label) {
+				if (fieldType == 'checkbox') {
+					label = group;
+				} else {
+					return;
+				}
+			}
+			// Construct inline field error, next to label
+			let warning = document.createElement('span');
+			// TODO: change gfield...
+			warning.classList.add('gfield_description','validation_message');
+			warning.setAttribute('id', `${field.id}_msg`);
+			warning.innerHTML = e.textContent;
+			label.parentNode.insertBefore(warning, label.nextSibling);
+		});
+		// console.log( errors );
 	}
 
 	if( jQuery ) { // backcompat jQuery events, use regular JS events instaed
