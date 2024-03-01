@@ -155,9 +155,10 @@
 
                 if ( $state === 'error' ) {
                     // There were errors
+                    $count  = count( $this->notices[$type] );
                     $string .= sprintf(
-                        _x( 'In %d velden zijn de gegevens niet correct ingevuld', 'EM form validation error message', 'gctheme' ),
-                        count( $this->notices[$type] ),
+                        _nx( 'In %d veld zijn de gegevens niet correct ingevuld', 'In %d velden zijn de gegevens niet correct ingevuld', $count, 'EM form validation error message', 'gctheme' ),
+                        $count,
                     );
                 } elseif ( $state === 'success' ) {
                     // Success
@@ -167,7 +168,7 @@
                     $string .= _x( 'Let op', 'EM form validation generic message', 'gctheme' );
                 }
                 $string .= '</div>';
-                $string .= '<ol class="form__message__body">';
+                $string .= '<ol class="form__message__body" role="list">';
 
                 foreach ($this->notices[$type] as $message){
                         // ----------------------------------------------
