@@ -521,7 +521,6 @@ var em_booking_form_submit_start = function( booking_form ){
 		let field = el.querySelector('[aria-invalid]');
 		if (field) {
 			field.removeAttribute('aria-invalid');
-			field.removeAttribute('aria-describedby');
 			let msg = document.getElementById(`${field.id}_error`);
 			if (msg) {
 				msg.remove();
@@ -685,7 +684,6 @@ var em_booking_form_submit_finally = function( booking_form, opts = {} ){
 			let isUserField = fieldParent.classList.contains('input-user-field');
 
 			field.setAttribute('aria-invalid', 'true');
-			field.setAttribute('aria-describedby', `${field.id}_error`);
 
 			let group = isUserField ? fieldParent : fieldParent.closest(isChoice ? 'fieldset' : '.input-group');
 			if (!group) {

@@ -57,7 +57,7 @@ function em_data_privacy_consent_checkbox( $EM_Object = false ){
 		}
 		?>
 		<label class="form__label" for="data_privacy_consent">
-			<input aria-describedby="pp-info" type="checkbox" id="data_privacy_consent" name="data_privacy_consent" value="1" <?php if( !empty($checked) ) echo 'checked="checked"'; ?>>
+			<input aria-describedby="pp-info data_privacy_consent_error" type="checkbox" id="data_privacy_consent" name="data_privacy_consent" value="1" <?php if( !empty($checked) ) echo 'checked="checked"'; ?>>
 			<?php echo $label; ?>
 		</label>
 	</fieldset>
