@@ -670,7 +670,7 @@ var em_booking_form_submit_finally = function( booking_form, opts = {} ){
 	// Try and show all inline error messages based on displayed
 	// error messages.
 
-	// Now add the attribute on currently invalid
+	// Now add the attribute on currently invalid fields
 	const errorMessage = document.querySelector('.form__message--error');
 	if (errorMessage) {
 		let errors = errorMessage.querySelectorAll('li a');
@@ -716,6 +716,28 @@ var em_booking_form_submit_finally = function( booking_form, opts = {} ){
 			}
 		});
 		// console.log( errors );
+
+		// @NOTE!
+		// Should we move focus to our warning message with links?
+		// errorMessage.focus();
+
+		// OR:
+		// Move the focus to the 1st invalid field?
+		// const firstInvalidField = document.getElementById(errors[0].getAttribute('href').replace('#', ''));
+		// if (firstInvalidField) {
+		// 	firstInvalidField.focus();
+		// }
+
+		// OR:
+		// Move the focus to the 1st LINK with validation warning
+		// in our message.
+		// I am not 100% sure this is the best way to do this, but it seems
+		// better than leaving the focus on the submit button and having
+		// the user have to find the error.
+		// const firstWarningLink = errorMessage.querySelector('li a');
+		// if (firstWarningLink) {
+		// 	firstWarningLink.focus();
+		// }
 	}
 
 	if( jQuery ) { // backcompat jQuery events, use regular JS events instaed
