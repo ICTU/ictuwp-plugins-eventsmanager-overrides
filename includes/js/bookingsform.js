@@ -522,12 +522,13 @@ var em_booking_form_submit_start = function( booking_form ){
 		if (field) {
 			field.removeAttribute('aria-invalid');
 			field.removeAttribute('aria-describedby');
-			let msg = document.getElementById(`${field.id}_msg`);
+			let msg = document.getElementById(`${field.id}_error`);
 			if (msg) {
 				msg.remove();
 			}
 		}
 	});
+	// End GC overrides
 
 	document.querySelectorAll('.em-booking-message').forEach( message => message.remove() );
 	em_booking_form_show_spinner( booking_form );
@@ -684,7 +685,7 @@ var em_booking_form_submit_finally = function( booking_form, opts = {} ){
 			let isUserField = fieldParent.classList.contains('input-user-field');
 
 			field.setAttribute('aria-invalid', 'true');
-			field.setAttribute('aria-describedby', `${field.id}_msg`);
+			field.setAttribute('aria-describedby', `${field.id}_error`);
 
 			let group = isUserField ? fieldParent : fieldParent.closest(isChoice ? 'fieldset' : '.input-group');
 			if (!group) {
@@ -706,11 +707,11 @@ var em_booking_form_submit_finally = function( booking_form, opts = {} ){
 			}
 			// Construct inline field error, next to label
 			// but only 1
-			if (!document.getElementById(`${field.id}_msg`)) {
+			if (!document.getElementById(`${field.id}_error`)) {
 				let warning = document.createElement('span');
 				// TODO: change gfield...
 				warning.classList.add('gfield_description','validation_message');
-				warning.setAttribute('id', `${field.id}_msg`);
+				warning.setAttribute('id', `${field.id}_error`);
 				warning.innerHTML = e.textContent;
 				label.parentNode.insertBefore(warning, label.nextSibling);
 			}
