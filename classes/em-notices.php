@@ -1,6 +1,6 @@
 <?php
     /**
-     * 
+     *
      * @author marcus
      *
      */
@@ -13,7 +13,7 @@
     	public $displayed = false;
     	public $set_cookies = true;
 		public $notices = array('errors'=>array(), 'infos'=>array(), 'alerts'=>array(), 'confirms'=>array());
-        
+
         function __construct( $set_cookies = true ){
         	//Grab from cookie, if it exists
         	$this->set_cookies = $set_cookies == true;
@@ -28,7 +28,7 @@
         	}
             add_filter('wp_redirect', array(&$this,'destruct'), 1,1);
         }
-        
+
         function destruct($redirect = false){
         	//Flush notices that weren't made to stay cross-requests, we can do this if initialized immediately.
         	foreach($this->notices as $notice_type => $notices){
@@ -48,11 +48,11 @@
         	}
         	return $redirect;
         }
-		
+
 		function display(){
 			echo $this;
 		}
-        
+
         function __toString(){
             $string = false;
             if(count($this->notices['errors']) > 0){
@@ -70,7 +70,7 @@
             $this->displayed = true;
             return ($string !== false) ? "<div class='statusnotice'>".$string."</div>" : '';
         }
-        
+
         /* General */
         function add($string, $type, $static = false){
         	if( is_array($string) ){
@@ -116,7 +116,7 @@
             	return false;
             }
         }
-        
+
         /**
          * Returns title of an array, assumes a assoc array with one item containing title => messages
          * @param unknown_type $array
@@ -126,7 +126,7 @@
             foreach($array as $title => $msgs)
             return $title;
         }
-        
+
         function remove($key, $type){
             if( isset($this->notices[$type]) ){
                 unset($this->notices[$type][$key]);
@@ -135,43 +135,78 @@
                 return false;
             }
         }
-        
+
         function remove_all(){
         	$this->notices = array('errors'=>array(), 'infos'=>array(), 'alerts'=>array(), 'confirms'=>array());
         }
-        
+
         function get($type){
             if( isset($this->notices[$type]) ){
-        		$string = '';
+                $string = '';
+                // @NOTE: GC Override: add .form__message markup
+                // This seems to be only used for 'errors'?
+                // Confirms are handled elsewhere...
+                // ----------------------------------------------
+                $state   = rtrim( $type, 's' ); // errorS => error, confirmS => confirm, etc.
+                // if ( $state === 'alert' ) { $state = 'error'; }
+                if ( $state === 'confirm' ) { $state = 'success'; }
+                $string .= '<div class="form__message form__message--' . $state . '" aria-live="assertive" role="alert">';
+                $string .= '<div class="form__message__header" tabindex="-1">';
+
+                if ( $state === 'error' ) {
+                    // There were errors
+                    $count  = count( $this->notices[$type] );
+                    $string .= sprintf(
+                        _nx( 'In %d veld zijn de gegevens niet correct ingevuld', 'In %d velden zijn de gegevens niet correct ingevuld', $count, 'EM form validation error message', 'gctheme' ),
+                        $count,
+                    );
+                } elseif ( $state === 'success' ) {
+                    // Success
+                    $string .= _x( 'Het formulier is succesvol verzonden!', 'EM form validation success message', 'gctheme' );
+                } else {
+                    // Generic?
+                    $string .= _x( 'Let op', 'EM form validation generic message', 'gctheme' );
+                }
+                $string .= '</div>';
+                $string .= '<ol class="form__message__body" role="list">';
+
                 foreach ($this->notices[$type] as $message){
-                    if( !is_array($message['string']) ){
-                        if( preg_match('/<p>/', $message['string']) ){
+                        // ----------------------------------------------
+                        // @NOTE: GC Override: change notice-element from <p> to <li>
+                        // ----------------------------------------------
+                        if( !is_array($message['string']) ){
+                        if( preg_match('/<li>/', $message['string']) ){
                             $string .= $message['string'];
                         }else{
-                            $string .= "<p>{$message['string']}</p>";
+                            $string .= "<li>{$message['string']}</li>";
                         }
                     }else{
-                        $string .= "<p><strong>".$message['title']."</strong><ul>";
+                        $string .= "<li><strong>".$message['title']."</strong><ol>";
                         foreach($message['string'] as $msg){
                             if( trim($msg) != '' ){
                             	$string .= "<li>$msg</li>";
                             }
-                        } 
-	                    $string .= "</ul></p>";
+                        }
+	                    $string .= "</ol></li>";
                     }
                 }
+                // ----------------------------------------------
+                // @NOTE: GC Override: add closing el for errors
+                // ----------------------------------------------
+                $string .= '</ol></div>';
+
                 return $string;
             }
             return false;
         }
-        
+
         function count($type){
        		if( isset($this->notices[$type]) ){
         		return count($this->notices[$type]);
             }
             return 0;
         }
-        
+
         /* Errors */
         function add_error($string, $static=false){
             return $this->add($string, 'errors', $static);
@@ -199,7 +234,7 @@
         function count_alerts(){
             return $this->count('alerts');
         }
-        
+
         /* Info */
         function add_info($string, $static=false){
             return $this->add($string, 'infos', $static);
@@ -213,7 +248,7 @@
         function count_infos(){
             return $this->count('infos');
         }
-        
+
         /* Confirms */
         function add_confirm($string, $static=false){
         	return $this->add($string, 'confirms', $static);
@@ -223,11 +258,11 @@
         }
         function get_confirms(){
             return $this->get('confirms');
-        }  
+        }
         function count_confirms(){
             return $this->count('confirms');
         }
-        
+
         // Encoiding in JsonSerializable
 	    #[\ReturnTypeWillChange]
 	    function jsonSerialize(){
@@ -266,11 +301,11 @@
 	        $var = ($key !== NULL && $key !== FALSE);
 	        return $var;
 	    }
-     
+
     }
     function em_notices_init(){
 	    global $EM_Notices;
-	    $EM_Notices = new EM_Notices();	
+	    $EM_Notices = new EM_Notices();
     }
     add_action('plugins_loaded', 'em_notices_init');
 ?>

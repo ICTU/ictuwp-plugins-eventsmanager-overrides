@@ -136,10 +136,29 @@ var em_booking_form_add_message = function( booking_form, content = null, opts =
 	}
 
 	// add message
+	/**
+	 * @NOTE: GC Override
+	 * We add some markup/classnames we need to properly
+	 * style the Success message.
+	 * The error-messages are all changed in em-notices.php
+	 */
 	if( content !== null ) {
 		let div = document.createElement('div');
-		div.classList.add('em-booking-message', 'em-booking-message-' + options.type );
-		div.innerHTML = content;
+		if ( options.type === 'success' ) {
+			div.classList.add('form__message', 'form__message--success', 'em-booking-message', 'em-booking-message-' + options.type );
+			div.setAttribute('role', 'alert');
+			div.setAttribute('aria-live', 'polite');
+			// GC: add header, and add content to that
+			let hed = document.createElement('div');
+			hed.classList.add('form__message__header' );
+			hed.innerHTML = content;
+			div.insertBefore( hed, div.firstChild );
+		} else {
+			// Default (previous) behavior
+			div.classList.add('em-booking-message', 'em-booking-message-' + options.type );
+			div.innerHTML = content;
+		}
+
 		booking_form.parentElement.insertBefore( div, booking_form );
 	}
 
@@ -491,6 +510,25 @@ var em_booking_form_submit = function( booking_form, opts = {} ){
 }
 
 var em_booking_form_submit_start = function( booking_form ){
+	// GC: overrides
+	// Try and show all inline error messages based on displayed
+	// error messages.
+
+	// first: clear all existing error attributes/inline messages
+	// from all form fields...
+	Array.from(booking_form.querySelectorAll('.has-error')).forEach( el => {
+		el.classList.remove('has-error');
+		let field = el.querySelector('[aria-invalid]');
+		if (field) {
+			field.removeAttribute('aria-invalid');
+			let msg = document.getElementById(`${field.id}_error`);
+			if (msg) {
+				msg.remove();
+			}
+		}
+	});
+	// End GC overrides
+
 	document.querySelectorAll('.em-booking-message').forEach( message => message.remove() );
 	em_booking_form_show_spinner( booking_form );
 	let booking_intent = booking_form.querySelector('input.em-booking-intent');
@@ -626,6 +664,79 @@ var em_booking_form_submit_finally = function( booking_form, opts = {} ){
 	}
 	if( options.showForm === true ) {
 		em_booking_form_unhide_success( booking_form, opts );
+	}
+
+	// GC: overrides
+	// Try and show all inline error messages based on displayed
+	// error messages.
+
+	// Now add the attribute on currently invalid fields
+	const errorMessage = document.querySelector('.form__message--error');
+	if (errorMessage) {
+		let errors = errorMessage.querySelectorAll('li a');
+		Array.from(errors).forEach( e => {
+			let field = document.getElementById(e.getAttribute('href').replace('#', ''));
+			if (!field) return;
+
+			let fieldType    = field.getAttribute('type');
+			let isChoice    = fieldType == 'radio' || fieldType == 'checkbox';
+			let fieldParent  = field.parentNode;
+			let isUserField = fieldParent.classList.contains('input-user-field');
+
+			field.setAttribute('aria-invalid', 'true');
+
+			let group = isUserField ? fieldParent : fieldParent.closest(isChoice ? 'fieldset' : '.input-group');
+			if (!group) {
+				if (fieldType == 'checkbox') {
+					group = fieldParent;
+				} else {
+					return;
+				}
+			}
+
+			group.classList.add('has-error');
+			let label = group.querySelector((isUserField ? 'label' : '.form__label'));
+			if (!label) {
+				if (fieldType == 'checkbox') {
+					label = group;
+				} else {
+					return;
+				}
+			}
+			// Construct inline field error, next to label
+			// but only 1
+			if (!document.getElementById(`${field.id}_error`)) {
+				let warning = document.createElement('span');
+				// TODO: change gfield...
+				warning.classList.add('gfield_description','validation_message');
+				warning.setAttribute('id', `${field.id}_error`);
+				warning.innerHTML = e.textContent;
+				label.parentNode.insertBefore(warning, label.nextSibling);
+			}
+		});
+		// console.log( errors );
+
+		// @NOTE!
+		// Should we move focus to our warning message with links?
+		// errorMessage.focus();
+
+		// OR:
+		// Move the focus to the 1st invalid field?
+		// const firstInvalidField = document.getElementById(errors[0].getAttribute('href').replace('#', ''));
+		// if (firstInvalidField) {
+		// 	firstInvalidField.focus();
+		// }
+
+		// OR:
+		// Move the focus to the 1st LINK with validation warning
+		// in our message.
+		// I am not 100% sure this is the best way to do this, but it seems
+		// better than leaving the focus on the submit button and having
+		// the user have to find the error.
+		// const firstWarningLink = errorMessage.querySelector('li a');
+		// if (firstWarningLink) {
+		// 	firstWarningLink.focus();
+		// }
 	}
 
 	if( jQuery ) { // backcompat jQuery events, use regular JS events instaed

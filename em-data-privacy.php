@@ -24,11 +24,13 @@ function em_data_privacy_consent_checkbox( $EM_Object = false ){
 	?>
     <fieldset class="input-group form__field-wrapper--required input-field-data_privacy_consent">
 		<legend class="form__label">
-		<?php echo sprintf(
-			'%s <span class="form__required-asterisk">* <span class="visually-hidden">%s</span></span></label>',
-			_x( 'Toestemming', 'Required fields: required consent', 'gctheme' ),
-			_x( 'Verplicht', 'Required fields: required text', 'gctheme' ),
-		);?>
+			<span class="form__label__content">
+			<?php echo sprintf(
+				'%s <span class="form__required-asterisk">* <span class="visually-hidden">%s</span></span></label>',
+				_x( 'Toestemming', 'Required fields: required consent', 'gctheme' ),
+				_x( 'Verplicht', 'Required fields: required text', 'gctheme' ),
+			);?>
+			</span>
 		</legend>
 		<?php
 		// Output a link to the privacy page, if available.
@@ -55,7 +57,7 @@ function em_data_privacy_consent_checkbox( $EM_Object = false ){
 		}
 		?>
 		<label class="form__label" for="data_privacy_consent">
-			<input aria-describedby="pp-info" type="checkbox" id="data_privacy_consent" name="data_privacy_consent" value="1" <?php if( !empty($checked) ) echo 'checked="checked"'; ?>>
+			<input aria-describedby="pp-info data_privacy_consent_error" type="checkbox" id="data_privacy_consent" name="data_privacy_consent" value="1" <?php if( !empty($checked) ) echo 'checked="checked"'; ?>>
 			<?php echo $label; ?>
 		</label>
 	</fieldset>
@@ -133,7 +135,10 @@ function em_data_privacy_consent_booking_validate( $result, $EM_Booking ){
 		if( !empty($consent_given_already) && get_option('dbem_data_privacy_consent_remember') == 1 ) return $result; //ignore if consent given as per settings
 	}
     if( empty($EM_Booking->booking_meta['consent']) ){
-	    $EM_Booking->add_error( sprintf(__('You must allow us to collect and store your data in order for us to process your booking.', 'events-manager')) );
+		// @NOTE: GC override link to field
+	    // $EM_Booking->add_error( sprintf(__('You must allow us to collect and store your data in order for us to process your booking.', 'events-manager')) );
+		$this_err = sprintf(__('You must allow us to collect and store your data in order for us to process your booking.', 'events-manager'));
+		$EM_Booking->add_error('<a href="#data_privacy_consent">Toestemming: ' . $this_err . '</a>');
 	    $result = false;
     }
     return $result;
