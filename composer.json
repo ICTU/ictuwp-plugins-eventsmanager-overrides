@@ -1,7 +1,8 @@
 {
   "name": "ictu/eventsmanager-overrides",
-  "description": "Paulus me fecit",
+  "description": "Events Manager (ICTU WP corrections)",
   "type": "wordpress-plugin",
+  "version": "7.0.0",
   "require": {
     "composer/installers": "v2.1.0"
   }
