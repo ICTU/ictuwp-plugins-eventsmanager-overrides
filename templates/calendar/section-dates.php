@@ -26,7 +26,7 @@ This template is the main meat of the calendar, most of the heavy lifting is don
 		<div class="<?php echo esc_attr($class); ?> em-cal-day em-cal-col-<?php echo $col_count; ?>">
 			<?php if( !empty($cell_data['events']) && count($cell_data['events']) > 0 ): ?>
 				<div class="em-cal-day-date colored" data-calendar-date="<?php echo $cell_data['date']; ?>">
-					<a href="<?php echo esc_url($cell_data['link']); ?>"><?php echo esc_html(date('j',$cell_data['date'])); ?></a>
+					<a href="<?php echo esc_url($cell_data['link']); ?>" title="<?php echo esc_attr($cell_data['link_title']); ?>"><?php echo esc_html(date('j',$cell_data['date'])); ?></a>
 					<?php if( $args['limit'] && $cell_data['events_count'] > $args['limit'] && get_option('dbem_display_calendar_events_limit_msg') != '' ): ?>
 						<div class="limited-icon size-small size-medium">+</div>
 					<?php endif; ?>

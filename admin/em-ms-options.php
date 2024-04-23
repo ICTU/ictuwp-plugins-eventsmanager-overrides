@@ -163,7 +163,7 @@ function em_ms_admin_options_page() {
 			<?php if( !$tabs_enabled || ($tabs_enabled && (empty($_REQUEST['em_tab']) || $_REQUEST['em_tab'] == 'general')) ): //make less changes for now, since we don't have any core tabs to add yet ?>
 		  	<div class="em-menu-general em-menu-group">
 				<div  class="postbox " id="em-opt-ms-options" >
-					<div class="handlediv"><br /></div><h3><span><?php _e ( 'Multi Site Options', 'events-manager'); ?></span></h3>
+					<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Multi Site Options', 'events-manager'); ?></span></h3>
 					<div class="inside">
 			            <table class="form-table">
 							<?php 

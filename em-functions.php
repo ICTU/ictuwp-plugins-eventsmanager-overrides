@@ -56,11 +56,11 @@ function em_paginate($link, $total, $limit, $page=1, $data=array(), $ajax = null
 		$placeholder = urlencode('%PAGE%');
 		$link = str_replace('%PAGE%', $placeholder, esc_url($link)); //To avoid url encoded/non encoded placeholders
 	    //Add the back and first buttons
-		    $string = ($page>1 && $startPage != 1) ? '<a class="prev first page-numbers" href="'.str_replace($placeholder,1,$link).'"><span class="visuallyhidden">Ga naar pagina</span> 1</a> ' : '';
+		    $string = ($page>1 && $startPage != 1) ? '<a class="prev first page-numbers" href="'.str_replace($placeholder,1,$link).'" title="1">&lt;&lt;</a> ' : '';
 		    if($page == 2){
-		    	$string .= ' <a class="prev page-numbers" href="'.esc_url($base_link.$base_querystring).'" aria-label="Ga naar pagina ' . ( $page - 1 ) . '">&lt;</a> ';
+		    	$string .= ' <a class="prev page-numbers" href="'.esc_url($base_link.$base_querystring).'" title="2">&lt;</a> ';
 		    }elseif($page > 2){
-		    	$string .= ' <a class="prev page-numbers" href="'.str_replace($placeholder,$page-1,$link).'" aria-label="Ga naar pagina ' . ( $page - 1 ) . '">&lt;</a> ';
+		    	$string .= ' <a class="prev page-numbers" href="'.str_replace($placeholder,$page-1,$link).'" title="'.($page-1).'">&lt;</a> ';
 		    }
 		//Loop each page and create a link or just a bold number if its the current page
 			// 10 11 12 13 14 15 16 17 18 19 20
@@ -79,15 +79,15 @@ function em_paginate($link, $total, $limit, $page=1, $data=array(), $ajax = null
 						$string .= '</span>';
 						$nc_open = false;
 					}
-	                $string .= ' <span class="page-numbers current"><span class="visuallyhidden">Je bent op pagina</span> '.$i.'</span>';
+	                $string .= ' <span class="page-numbers current">'.$i.'</span>';
 					if( $responsive && $i + 2 < $thisLastPage ) {
 						$string .= '<span class="not-current second-half">';
 						$nc_open = true;
 					}
 	            }elseif($i=='1'){
-	                $string .= ' <a class="page-numbers" href="'.esc_url($base_link.$base_querystring).'" aria-label="Ga naar pagina ' . $i . '">'.$i.'</a> ';
+	                $string .= ' <a class="page-numbers" href="'.esc_url($base_link.$base_querystring).'" title="'.$i.'">'.$i.'</a> ';
 	            }else{
-	                $string .= ' <a class="page-numbers" href="'.str_replace($placeholder,$i,$link).'" aria-label="Ga naar pagina ' . $i . '">'.$i.'</a> ';
+	                $string .= ' <a class="page-numbers" href="'.str_replace($placeholder,$i,$link).'" title="'.$i.'">'.$i.'</a> ';
 	            }
 				// leave last number unwrapped
 			    if( !empty($nc_open) && $i + 2 == $thisLastPage ){
@@ -95,8 +95,8 @@ function em_paginate($link, $total, $limit, $page=1, $data=array(), $ajax = null
 			    }
 		    }
 		//Add the forward and last buttons
-		    $string .= ($page < $maxPages) ? ' <a class="next page-numbers" href="'.str_replace($placeholder,$page+1,$link).'">&gt;</a> ' :' ' ;
-		    $string .= ($i-1 < $maxPages) ? ' <a class="next last page-numbers" href="'.str_replace($placeholder,$maxPages,$link).'">&gt;&gt;</a> ' : ' ';
+		    $string .= ($page < $maxPages) ? ' <a class="next page-numbers" href="'.str_replace($placeholder,$page+1,$link).'" title="'.($page+1).'">&gt;</a> ' :' ' ;
+		    $string .= ($i-1 < $maxPages) ? ' <a class="next last page-numbers" href="'.str_replace($placeholder,$maxPages,$link).'" title="'.$maxPages.'">&gt;&gt;</a> ' : ' ';
 		// add ajax flag
 			$ajax_class = $ajax ? 'em-ajax':'';
 		//Return the string
@@ -269,6 +269,7 @@ function em_get_currency_formatted($price, $currency=false, $format=false, $prec
 	$formatted_price = '';
 	if(!$format) $format = get_option('dbem_bookings_currency_format','@#');
 	if(!$currency) $currency = get_option('dbem_bookings_currency');
+	if( empty($price) ) $price = 0;
 	$formatted_price = str_replace('#', number_format( $price, $precision, get_option('dbem_bookings_currency_decimal_point','.'), get_option('dbem_bookings_currency_thousands_sep',',') ), $format);
 	$formatted_price = str_replace('@', em_get_currency_symbol(true,$currency), $formatted_price);
 	return apply_filters('em_get_currency_formatted', $formatted_price, $price, $currency, $format);
@@ -603,6 +604,11 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	$search_args['search_text_show'] = get_option('dbem_search_form_advanced_show'); // deprecated
 	$search_args['search_text_hide'] = get_option('dbem_search_form_advanced_hide'); // deprecated
 	$search_args['search_button'] = get_option('dbem_search_form_submit');
+	$search_args['saved_searches'] = get_option('dbem_search_form_saved_searches', true);
+	$search_args['search_advanced_style'] = get_option('dbem_search_form_advanced_style', 'accordion'); // how to show the dropdowns in the advanced section
+	$search_args['search_multiselect_style'] = $search_args['search_advanced_style'] === 'accordion' ? 'always-open' : 'multidropdown' ; // how to show the dropdowns in the advanced section
+	// sorting options
+	$search_args['sorting'] = get_option('dbem_search_form_sorting'); // is sorting enabled
 	//search text
 	$search_args['search'] = ''; //default search term
 	$search_args['search_term'] = $search_args['search_term_main'] = get_option('dbem_search_form_text');
@@ -642,6 +648,8 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	$search_args['category_label'] = get_option('dbem_search_form_category_label'); //field label
 	$search_args['categories_label'] = get_option('dbem_search_form_categories_label'); //select default
 	$search_args['categories_placeholder'] = get_option('dbem_search_form_categories_placeholder'); // advanced search placeholder
+	$search_args['categories_clear_text'] = esc_html__('Clear Selected'); // advanced search placeholder
+	$search_args['categories_count_text'] = esc_html__('%d Selected'); // advanced search placeholder
 	$search_args['categories_include'] = get_option('dbem_search_form_categories_include'); // include/exclude filters of categories to show
 	$search_args['categories_exclude'] = get_option('dbem_search_form_categories_exclude'); // include/exclude filters of categories to hide
 	// tags
@@ -650,6 +658,8 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	$search_args['tag_label'] = get_option('dbem_search_form_tag_label'); //field label
 	$search_args['tags_label'] = get_option('dbem_search_form_tags_label'); //select default
 	$search_args['tags_placeholder'] = get_option('dbem_search_form_tags_placeholder'); // advanced search placeholder
+	$search_args['tags_clear_text'] = esc_html__('Clear Selected'); // advanced search placeholder
+	$search_args['tags_count_text'] = esc_html__('%d Selected'); // advanced search placeholder
 	$search_args['tags_include'] = get_option('dbem_search_form_tags_include'); // include/exclude filters of tags to show
 	$search_args['tags_exclude'] = get_option('dbem_search_form_tags_exclude'); // include/exclude filters of tags to hide
 	//countries
@@ -674,6 +684,7 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	$search_args['show_advanced'] = get_option('dbem_search_form_advanced') && ( $search_args['search_categories'] || $search_args['search_tags'] || $search_args['search_countries'] || $search_args['search_regions'] || $search_args['search_states'] || $search_args['search_towns']);
 	$search_args['advanced_mode'] = get_option('dbem_search_form_advanced_mode') === 'inline' ? 'inline':'modal';
 	$search_args['advanced_hidden'] = $search_args['show_advanced'] && get_option('dbem_search_form_advanced_hidden');
+	$search_args['advanced_trigger'] = !( $search_args['advanced_hidden'] && get_option('dbem_search_form_advanced_trigger') && $search_args['advanced_mode'] === 'inline' ) && $search_args['show_advanced'];
 	
 	// disable certain things based on context, can be overriden by $base_args, not necessarily recommended
 	if( $context == 'locations' ){
@@ -747,11 +758,14 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	$main_search_count = 0; // number of search fields
 	$args['css_classes'][] = $args['show_main'] ? 'has-search-main':'no-search-main';
 	$args['css_classes'][] = !empty($args['views']) && count($args['views']) > 1 ? 'has-views':'no-views';
+	$args['css_classes'][] = $args['sorting'] ? 'has-sorting':'no-sorting';
 	$args['css_classes'][] = $args['show_advanced'] ? 'has-advanced':'no-advanced';
 	if( $args['show_advanced'] ){
 		$args['css_classes'][] = 'advanced-mode-' . $args['advanced_mode'];
 		$args['css_classes'][] = $args['advanced_hidden'] ? 'advanced-hidden':'advanced-visible';
+		$args['css_classes'][] = $args['advanced_trigger'] ? 'has-advanced-trigger' : 'no-advanced-trigger';
 	}
+
 	if( isset($args['show_search']) && !$args['show_search'] ){
 		$args['css_classes'][] = 'is-hidden';
 	}
@@ -759,6 +773,7 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	if( empty($args['advanced_hidden']) ){
 		$args['css_classes_advanced'][] = ' visible';
 	}
+	$args['css_classes'][] = get_option('dbem_search_form_responsive', 'one-line');
 	
 	//overwrite with $_REQUEST defaults in event of a submitted search
 	if( isset($_REQUEST['view_id']) ) $args['id'] = absint($_REQUEST['view_id']); // id used for element ids
@@ -893,6 +908,7 @@ function em_output_events_view( $args, $view = null ){
 	if( $view === null ){
 		$view = empty($args['view']) ? get_option('dbem_search_form_view') : $args['view'];
 	}
+    do_action('em_output_events_view_header', $args, $view);
 	switch( $view ){
 		case 'list-grouped':
 			if( empty($args['date_format']) ){
@@ -934,6 +950,7 @@ function em_output_events_view( $args, $view = null ){
 			}
 			break;
 	}
+	do_action('em_output_events_view_footer', $args, $view);
 }
 
 function em_get_location_search_views(){
@@ -1024,16 +1041,22 @@ function em_checkbox_items($name, $array, $saved_values, $horizontal = true) {
 	echo $output;
 
 }
-function em_options_input_text($title, $name, $description ='', $default='', $resetable = false) {
-    $translate = EM_ML::is_option_translatable($name);
-    if( preg_match('/^([^\[]+)\[([^\]]+)?\]$/', $name, $matches) ){
-    	$value = EM_Options::get($matches[2], $default, $matches[1]);
-    }elseif( preg_match('/^([^\[]+)\[([^\]]+)\]\[([^\]]+)?\]$/', $name, $matches) ){
+
+function em_options_input_get_value( $name, $default = '' ){
+	if( preg_match('/^([^\[]+)\[([^\]]+)?\]$/', $name, $matches) ){
+		$value = EM_Options::get($matches[2], $default, $matches[1]);
+	}elseif( preg_match('/^([^\[]+)\[([^\]]+)\]\[([^\]]+)?\]$/', $name, $matches) ){
 		$value_array = EM_Options::get($matches[2], array(), $matches[1]);
 		$value = isset($value_array[$matches[3]]) ? $value_array[$matches[3]]:$default;
 	}else{
-        $value = get_option($name, $default);
-    }
+		$value = get_option($name, $default);
+	}
+	return $value;
+}
+
+function em_options_input_text($title, $name, $description ='', $default='', $resetable = false) {
+    $translate = EM_ML::is_option_translatable($name);
+	$value = em_options_input_get_value( $name, $default );
 	?>
 	<tr valign="top" id='<?php echo esc_attr($name);?>_row'>
 		<th scope="row">
@@ -1075,11 +1098,12 @@ function em_options_input_text($title, $name, $description ='', $default='', $re
 }
 
 function em_options_input_password($title, $name, $description ='') {
+	$value = em_options_input_get_value( $name );
 	?>
 	<tr valign="top" id='<?php echo esc_attr($name);?>_row'>
 		<th scope="row"><?php echo esc_html($title); ?></th>
 	    <td>
-			<input name="<?php echo esc_attr($name) ?>" type="password" id="<?php echo esc_attr($title) ?>" style="width: 95%" value="<?php echo esc_attr(get_option($name)); ?>" size="45" /><br />
+			<input name="<?php echo esc_attr($name) ?>" type="password" id="<?php echo esc_attr($title) ?>" style="width: 95%" value="<?php echo esc_attr($value); ?>" size="45" /><br />
 			<em><?php echo $description; ?></em>
 		</td>
 	</tr>
@@ -1185,16 +1209,25 @@ function em_options_radio_binary($title, $name, $description='', $option_names =
 	<?php
 }
 
-function em_options_select($title, $name, $list, $description='', $default='', $triggers = array()) {
+function em_options_select($title, $name, $list, $description='', $default='', $triggers = array(), $options = array() ) {
 	$option_value = get_option($name, $default);
 	if( $name == 'dbem_events_page' && !is_object(get_page($option_value)) ){
 		$option_value = 0; //Special value
+	}
+	$select_classes = array();
+	if( !empty($triggers) ) $select_classes[] = 'em-trigger';
+	if( !empty($options['selectize']) ) $select_classes[] = 'em-selectize';
+	if( !empty($options['multiple']) ){
+		$name .= '[]';
+		if( !is_array($option_value) ){
+			$option_value = array($option_value);
+		}
 	}
 	?>
    	<tr valign="top" id='<?php echo esc_attr($name);?>_row'>
    		<th scope="row"><?php echo esc_html($title); ?></th>
    		<td>
-			<select name="<?php echo esc_attr($name); ?>" <?php if( !empty($triggers) ) echo 'class="em-trigger"'; ?> >
+			<select name="<?php echo esc_attr($name); ?>" class="<?php echo implode(' ', $select_classes); ?>" <?php if( !empty($options['multiple']) ) echo 'multiple'; ?>>
 				<?php 
 				foreach($list as $key => $value) {
 					if( is_array($value) ){
@@ -1210,8 +1243,13 @@ function em_options_select($title, $name, $list, $description='', $default='', $
 						?></optgroup><?php
 					}else{
 						$trigger = !empty( $triggers[$key] ) ? $triggers[$key] : '';
+						if( !empty($options['multiple']) ) {
+							$selected = in_array($key, $option_value) ? "selected='selected' ":'';
+						} else {
+							$selected = ("$key" == $option_value) ? "selected='selected' " : '';
+						}
 						?>
-		 				<option value='<?php echo esc_attr($key) ?>' <?php echo ("$key" == $option_value) ? "selected='selected' " : ''; ?> data-trigger="<?php echo esc_attr($trigger); ?>">
+		 				<option value='<?php echo esc_attr($key) ?>' <?php echo $selected; ?> data-trigger="<?php echo esc_attr($trigger); ?>">
 		 					<?php echo esc_html($value); ?>
 		 				</option>
 						<?php 

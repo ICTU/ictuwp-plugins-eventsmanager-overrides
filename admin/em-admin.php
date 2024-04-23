@@ -138,40 +138,27 @@ function em_admin_warnings() {
 	$dismiss_link_joiner = ( count($_GET) > 0 ) ? '&amp;':'?';
 	
 	if( current_user_can('activate_plugins') ){
-		//New User Intro
-		if (isset ( $_GET ['disable_hello_to_user'] ) && $_GET ['disable_hello_to_user'] == 'true'){
-			// Disable Hello to new user if requested
-			update_option('dbem_hello_to_user',0);
-		}elseif ( get_option ( 'dbem_hello_to_user' ) ) {
-			//FIXME update welcome msg with good links
-			$advice = sprintf( __("<p>Events Manager is ready to go! It is highly recommended you read the <a href='%s'>Getting Started</a> guide on our site, as well as checking out the <a href='%s'>Settings Page</a>. <a href='%s' title='Don't show this advice again'>Dismiss</a></p>", 'events-manager'), 'http://wp-events-plugin.com/documentation/getting-started-guide/?utm_source=em&utm_medium=plugin&utm_content=installationlink&utm_campaign=plugin_links', EM_ADMIN_URL .'&amp;page=events-manager-options', esc_url($_SERVER['REQUEST_URI'].$dismiss_link_joiner.'disable_hello_to_user=true'));
-			?>
-			<div id="message" class="updated">
-				<?php echo $advice; ?>
-			</div>
-			<?php
-		}
-	
+		
 		//If events page couldn't be created or is missing
-		if( !empty($_GET['em_dismiss_events_page']) ){
+		if( !empty($_GET['em_dismiss_events_page']) && wp_verify_nonce($_GET['em_dismiss_events_page'], 'em_dismiss_notice') ){
 			update_option('dbem_dismiss_events_page',1);
 		}else{
 			if ( !get_page($events_page_id) && !get_option('dbem_dismiss_events_page') ){
 				?>
 				<div id="em_page_error" class="updated">
-					<p><?php echo sprintf ( __( 'Uh Oh! For some reason WordPress could not create an events page for you (or you just deleted it). Not to worry though, all you have to do is create an empty page, name it whatever you want, and select it as your events page in your <a href="%s">settings page</a>. Sorry for the extra step! If you know what you are doing, you may have done this on purpose, if so <a href="%s">ignore this message</a>', 'events-manager'), EM_ADMIN_URL .'&amp;page=events-manager-options', esc_url($_SERVER['REQUEST_URI'].$dismiss_link_joiner.'em_dismiss_events_page=1') ); ?></p>
+					<p><?php echo sprintf ( __( 'Uh Oh! For some reason WordPress could not create an events page for you (or you just deleted it). Not to worry though, all you have to do is create an empty page, name it whatever you want, and select it as your events page in your <a href="%s">settings page</a>. Sorry for the extra step! If you know what you are doing, you may have done this on purpose, if so <a href="%s">ignore this message</a>', 'events-manager'), EM_ADMIN_URL .'&amp;page=events-manager-options', esc_url($_SERVER['REQUEST_URI'].$dismiss_link_joiner.'em_dismiss_events_page='.wp_create_nonce('em_dismiss_notice')) ); ?></p>
 				</div>
 				<?php
 			}
 		}
 	
 		if( is_multisite() && !empty($_REQUEST['page']) && $_REQUEST['page']=='events-manager-options' && em_wp_is_super_admin() && get_option('dbem_ms_update_nag') ){
-			if( !empty($_GET['disable_dbem_ms_update_nag']) ){
+			if( !empty($_GET['disable_dbem_ms_update_nag'])  && wp_verify_nonce($_GET['disable_dbem_ms_update_nag'], 'em_dismiss_notice') ){
 				delete_site_option('dbem_ms_update_nag');
 			}else{
 				?>
 				<div id="em_page_error" class="updated">
-					<p><?php echo sprintf(__('MultiSite options have moved <a href="%s">here</a>. <a href="%s">Dismiss message</a>','events-manager'),admin_url().'network/admin.php?page=events-manager-options', esc_url($_SERVER['REQUEST_URI'].'&amp;disable_dbem_ms_update_nag=1')); ?></p>
+					<p><?php echo sprintf(__('MultiSite options have moved <a href="%s">here</a>. <a href="%s">Dismiss message</a>','events-manager'),admin_url().'network/admin.php?page=events-manager-options', esc_url($_SERVER['REQUEST_URI'].'&amp;disable_dbem_ms_update_nag='.wp_create_nonce('em_dismiss_notice'))); ?></p>
 				</div>
 				<?php
 			}
@@ -184,26 +171,15 @@ function em_admin_warnings() {
 			<?php
 		}
 		if( class_exists('SitePress') && !class_exists('EM_WPML') && !get_site_option('disable_em_wpml_warning') ){
-			if( !empty($_REQUEST['disable_em_wpml_warning']) ){
+			if( !empty($_REQUEST['disable_em_wpml_warning']) && wp_verify_nonce($_GET['disable_em_wpml_warning'], 'em_dismiss_notice') ){
 				update_site_option('disable_em_wpml_warning',1);
 			}else{
 				?>
 				<div id="message" class="updated">
-					<p><?php echo sprintf(__('It looks like you have WPML enabled on your site. We advise you also install our extra <a href="%s">Events Manager WPML Connector</a> plugin which helps the two work better together. <a href="%s">Dismiss message</a>','events-manager'),'http://wordpress.org/extend/plugins/events-manager-wpml/', esc_url(add_query_arg(array('disable_em_wpml_warning'=>1)))); ?></p>
+					<p><?php echo sprintf(__('It looks like you have WPML enabled on your site. We advise you also install our extra <a href="%s">Events Manager WPML Connector</a> plugin which helps the two work better together. <a href="%s">Dismiss message</a>','events-manager'),'http://wordpress.org/extend/plugins/events-manager-wpml/', esc_url(add_query_arg(array('disable_em_wpml_warning'=>wp_create_nonce('em_dismiss_notice'))))); ?></p>
 				</div>
 				<?php
 			}
-		}
-		if( array_key_exists('dbem_disable_timthumb', wp_load_alloptions()) ){
-			if( !empty($_REQUEST['dbem_disable_timthumb']) ){
-				delete_option('dbem_disable_timthumb',1);
-			}else{
-				?>
-				<div id="message" class="updated">
-					<p>We have stopped using TimThumb for thumbnails in Events Manager, <a href="http://wp-events-plugin.com/blog/2014/12/05/bye-timthumb/">please see this post</a> for more information on how this may affect you and what options are available to you. <a href="<?php echo esc_url(add_query_arg(array('dbem_disable_timthumb'=>1))); ?>">Dismiss</a></p>
-				</div>
-				<?php
-			}		    
 		}
 	}
 	//Warn about EM page edit
@@ -287,7 +263,7 @@ function em_updates_check( $transient ) {
     
     return $transient;
 }
-// add_filter('pre_set_site_transient_update_plugins', 'em_updates_check', 100); // Hook into the plugin update check and mod for dev version
+add_filter('pre_set_site_transient_update_plugins', 'em_updates_check', 100); // Hook into the plugin update check and mod for dev version
 
 function em_user_action_links( $actions, $user ){
 	if ( !is_network_admin() && current_user_can( 'manage_others_bookings' ) ){
@@ -302,248 +278,4 @@ function em_user_action_links( $actions, $user ){
 	return $actions;
 }
 add_filter('user_row_actions','em_user_action_links',10,2);
-
-// admin modal notices
-class EM_Admin_Modals {
-	
-	public static $output_js = false;
-	
-	public static function init() {
-		add_filter('admin_enqueue_scripts', 'EM_Admin_Modals::admin_enqueue_scripts', 100);
-		add_filter('wp_ajax_em-admin-popup-modal', 'EM_Admin_Modals::ajax');
-		add_filter('em_admin_notice_review-nudge_message', 'EM_Admin_Modals::review_notice');
-		if( time() < 1686139200 ) {
-			add_filter( 'em_admin_notice_promo-popup_message', 'EM_Admin_Modals::promo_notice' );
-		}
-	}
-	
-	public static function admin_enqueue_scripts(){
-		if( !current_user_can('update_plugins') ) return;
-		// show modal
-		$data = is_multisite() ? get_site_option('dbem_data') : get_option('dbem_data');
-		if( !empty($data['admin-modals']) ){
-			$show_plugin_pages = !empty($_REQUEST['post_type']) && in_array($_REQUEST['post_type'], array(EM_POST_TYPE_EVENT, EM_POST_TYPE_LOCATION, 'event-recurring'));
-			$show_network_admin = is_network_admin() && !empty($_REQUEST['page']) && preg_match('/^events\-manager\-/', $_REQUEST['page']);
-			// show review nudge
-			if( !empty($data['admin-modals']['review-nudge']) && $data['admin-modals']['review-nudge'] < time() ) {
-				if( $show_plugin_pages || $show_network_admin ) {
-					// check it hasn't been shown more than 3 times, if so revert it to a regular admin notice
-					if( empty($data['admin-modals']['review-nudge-count']) ){
-						$data['admin-modals']['review-nudge-count'] = 0;
-					}
-					if( $data['admin-modals']['review-nudge-count'] < 3 ) {
-						// enqueue script and load popup action
-						if ( ! wp_script_is( 'events-manager-admin' ) ) {
-							EM_Scripts_and_Styles::admin_enqueue( true );
-						}
-						add_filter( 'admin_footer', 'EM_Admin_Modals::review_popup' );
-						$data['admin-modals']['review-nudge-count']++;
-						update_site_option('dbem_data', $data);
-					}else{
-						// move it into a regular admin notice and stop displaying
-						unset($data['admin-modals']['review-nudge-count']);
-						unset($data['admin-modals']['review-nudge']);
-						update_site_option('dbem_data', $data);
-						// notify user of new update
-						$EM_Admin_Notice = new EM_Admin_Notice(array( 'name' => 'review-nudge', 'who' => 'admin', 'where' => 'plugin' ));
-						EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
-					}
-				}
-			}
-			// promo
-			$pro_license_active = defined('EMP_VERSION');
-			if( $pro_license_active ){
-				$key = get_option('dbem_pro_api_key');
-				$pro_license_active = !(empty($key['until']) || $key['until'] < 1686139200);
-			}
-			if( time() < 1686139200 && !empty($data['admin-modals']['promo-popup']) && !$pro_license_active) {
-				if( $data['admin-modals']['promo-popup'] == 1 || ($data['admin-modals']['promo-popup'] == 2 && ($show_plugin_pages || $show_network_admin) ) ) {
-					// enqueue script and load popup action
-					if( empty($data['admin-modals']['promo-popup-count']) ){
-						$data['admin-modals']['promo-popup-count'] = 0;
-					}
-					if( $data['admin-modals']['promo-popup-count'] <= 1 ) {
-						if( !wp_script_is('events-manager-admin') ) EM_Scripts_and_Styles::admin_enqueue(true);
-						add_filter('admin_footer', 'EM_Admin_Modals::promo_popup');
-						$data['admin-modals']['promo-popup-count']++;
-						update_site_option('dbem_data', $data);
-					}else{
-						// move it into a regular admin notice and stop displaying
-						unset($data['admin-modals']['promo-popup-count']);
-						unset($data['admin-modals']['promo-popup']);
-						update_site_option('dbem_data', $data);
-						// notify user of new update
-						$EM_Admin_Notice = new EM_Admin_Notice(array( 'name' => 'promo-popup', 'who' => 'admin', 'where' => 'plugin' ));
-						EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
-					}
-				}
-			}
-		}
-	}
-	
-	public static function review_popup(){
-		// check admin data and see if show data is still enabled
-		?>
-		<div class="em pixelbones em-modal <?php em_template_classes('search', 'search-advanced'); ?> em-admin-modal" id="em-review-nudge" data-nonce="<?php echo wp_create_nonce('em-review-nudge'); ?>">
-			<div class="em-modal-popup">
-				<header>
-					<div class="em-modal-title"><?php esc_html_e('Enjoying Events Manager? Help Us Improve!', 'events-manager'); ?></div>
-				</header>
-				<div class="em-modal-content has-image">
-					<div>
-						<p><?php esc_html_e('Pardon the interruption... we hope you\'re enjoying Events Manager, and if so, we\'d really appreciate a positive review on the wordpress.org repository!', 'events-manager'); ?></p>
-						<p><?php esc_html_e('Events Manager has been maintained, developed and supported for free since it was released in 2008, positive reviews are one that help us keep going.', 'events-manager'); ?></p>
-						<p><?php esc_html_e('If you could spare a few minutes, we would appreciate it if you could please leave us a review.', 'events-manager'); ?></p>
-					</div>
-					<div class="image">
-						<img src="<?php echo EM_DIR_URI . '/includes/images/star-halo.svg'; ?>" style="width:75%; opacity:0.7;">
-						<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>">
-					</div>
-				</div><!-- content -->
-				<footer class="em-submit-section input">
-					<div>
-						<button class="button button-secondary dismiss-modal"><?php esc_html_e('Dismiss Message', 'events-manager'); ?></button>
-					</div>
-					<div>
-						<a href="https://wordpress.org/support/plugin/events-manager/reviews/?filter=5#new-topic-0" class="button button-primary input" target="_blank" style="margin:10px auto; --accent-color:#429543; --accent-color-hover:#429543;">
-							Leave a Review
-							<img src="<?php echo EM_DIR_URI . '/includes/images/five-stars.svg'; ?>" style="max-height:10px; width:50px; margin-left:5px;">
-						</a>
-					</div>
-				</footer>
-			</div><!-- modal -->
-		</div>
-		<?php
-		static::output_js();
-	}
-	
-	public static function review_notice(){
-		ob_start();
-		?>
-		<div style="display: grid; grid-template-columns: 80px auto; grid-gap: 20px;">
-			<div style="align-self: center; text-align: center; padding-left: 10px;">
-				<img src="<?php echo EM_DIR_URI . '/includes/images/star-halo.svg'; ?>" style="width:75%; opacity:0.7;">
-				<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>" style="width: 100%;">
-			</div>
-			<div>
-				<p><?php esc_html_e('Pardon the interruption... we hope you\'re enjoying Events Manager, and if so, we\'d really appreciate a positive review on the wordpress.org repository!', 'events-manager'); ?></p>
-				<p>
-					<?php esc_html_e('Events Manager has been maintained, developed and supported for free since it was released in 2008, positive reviews are one that help us keep going.', 'events-manager'); ?>
-					<?php esc_html_e('If you could spare a few minutes, we would appreciate it if you could please leave us a review.', 'events-manager'); ?>
-				</p>
-				<a href="https://wordpress.org/support/plugin/events-manager/reviews/?filter=5#new-topic-0" class="button button-primary input" target="_blank" style="margin:10px 10px 10px 0; --accent-color:#429543; --accent-color-hover:#429543;">
-					Leave a Review
-					<img src="<?php echo EM_DIR_URI . '/includes/images/five-stars.svg'; ?>" style="max-height:10px; width:50px; margin-left:5px;">
-				</a>
-				<a href="<?php echo esc_url( admin_url('admin-ajax.php?action=em_dismiss_admin_notice&notice=review-nudge&redirect=1' ) ); ?>" class="button button-secondary" style="margin:10px 0;"><?php esc_html_e('Dismiss', 'events-manager'); ?></a>
-			</div>
-		</div><!-- content -->
-		<?php
-		return ob_get_clean();
-	}
-	
-	public static function promo_popup(){
-		// check admin data and see if show data is still enabled
-		?>
-		<div class="em pixelbones em-modal <?php em_template_classes('search', 'search-advanced'); ?> em-admin-modal" id="em-promo-popup" data-nonce="<?php echo wp_create_nonce('em-promo-popup'); ?>">
-			<div class="em-modal-popup">
-				<header>
-					<a class="em-close-modal dismiss-modal" href="#"></a><!-- close modal -->
-					<div class="em-modal-title">Events Manager Pro - All add-ons condition ends soon!</div>
-				</header>
-				<div class="em-modal-content has-image" style="--font-size:16px;">
-					<div>
-						<p>Pardon the interruption.... we'd like to make sure you're aware of an <a href="https://wp-events-plugin.com/blog/2023/04/21/upcoming-pro-plan-changes/?utm_source=events-manager&utm_medium=plugin-popup&utm_campaign=plugins" target="_blank">important announcement</a> about our <a href="https://eventsmanagerpro.com?utm_source=events-manager&utm_medium=plugin-popup&utm_campaign=plugins" target="_blank">Events Manager Pro</a> add-on.</p>
-						<p>Since its inception, we have included all our add-ons in our Pro plugin, all you needed to choose is the number of sites you'd like to purchase a license for.</p>
-						<p>As of <strong><em>June 7th 12:00 UTC</em></strong>, our WooCommerce add-on will be sold exclusively on woocommerce.com, additionally future 3rd party integrations we create may not be included for free with Pro either.</p>
-						<p><strong>Any licenses purchased before the price change will lock in the current conditions, which is why we're letting you know now.</strong></p>
-						<p>We hope you're enjoying the plugin and if you're at all considering going Pro, you still have time to make the best of this limited opportunity!</p>
-						<p><a href="https://wp-events-plugin.com/blog/2023/04/21/upcoming-pro-plan-changes/?utm_source=events-manager&utm_medium=plugin-popup&utm_campaign=plugins" target="_blank">View the full announement here.</a></p>
-					</div>
-					<div class="image">
-						<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>">
-						<a href="https://eventsmanagerpro.com/gopro/?utm_source=events-manager&utm_medium=plugin-popup&utm_campaign=plugins" class="button button-primary input" target="_blank" style="margin:10px auto; --accent-color:#429543; --accent-color-hover:#429543;">Go Pro!</a>
-					</div>
-				</div><!-- content -->
-				<footer class="em-submit-section input">
-					<div>
-					</div>
-					<div>
-						<button class="button button-secondary dismiss-modal">Dismiss Notice</button>
-					</div>
-				</footer>
-			</div><!-- modal -->
-		</div>
-		<?php
-		static::output_js();
-	}
-	
-	public static function promo_notice(){
-		ob_start();
-		?>
-		<div style="display: grid; grid-template-columns: 80px auto; grid-gap: 20px;">
-			<div style="text-align: center; padding-left: 10px; padding-top:10px;">
-				<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>" style="width: 100%;">
-			</div>
-			<div>
-				<p>Pardon the interruption.... we'd like to make sure you're aware of an <a href="https://wp-events-plugin.com/blog/2023/04/21/upcoming-pro-plan-changes/?utm_source=events-manager&utm_medium=plugin-popup&utm_campaign=plugins" target="_blank">important announcement</a> about our <a href="https://eventsmanagerpro.com?utm_source=events-manager&utm_medium=plugin-popup&utm_campaign=plugins" target="_blank">Events Manager Pro</a> add-on.</p>
-				<p>Since its inception, we have included all our add-ons in our Pro plugin, all you needed to choose is the number of sites you'd like to purchase a license for.</p>
-				<p>As of <strong><em>June 7th 12:00 UTC</em></strong>, our WooCommerce add-on will be sold separately on woocommerce.com, additionally future 3rd party integrations we create may not be included for free with Pro either.</p>
-				<p><strong>Any licenses purchased before the price change will lock in the current conditions, which is why we're letting you know now.</strong></p>
-				<p>We hope you're enjoying the plugin and if you're at all considering going Pro, you still have time to make the best of this limited opportunity!</p>
-				<p><a href="https://wp-events-plugin.com/blog/2023/04/21/upcoming-pro-plan-changes/?utm_source=events-manager&utm_medium=plugin-popup&utm_campaign=plugins" target="_blank">View the full announement here.</a></p>
-				<a href="https://eventsmanagerpro.com/gopro/?utm_source=events-manager&utm_medium=plugin-popup&utm_campaign=plugins" class="button button-primary input" target="_blank" style="margin-right:10px; --accent-color:#429543; --accent-color-hover:#429543;">Go Pro!</a>
-				<a href="<?php echo esc_url( admin_url('admin-ajax.php?action=em_dismiss_admin_notice&notice=promo-popup&redirect=1' ) ); ?>" class="button button-secondary"><?php esc_html_e('Dismiss', 'events-manager'); ?></a>
-			</div>
-		</div><!-- content -->
-		<?php
-		return ob_get_clean();
-	}
-	
-	public static function output_js(){
-		if( !static::$output_js ){
-			?>
-			<script>
-				jQuery(document).ready(function($){
-					$('.em-admin-modal').each( function(){
-						let modal = $(this);
-						let ignore_event = false;
-						openModal( modal );
-						modal.on('em_modal_close', function(){
-							// send AJAX to close
-							if( ignore_event ) return false;
-							$.post( EM.ajaxurl, { action : 'em-admin-popup-modal', 'dismiss':'close', 'modal':modal.attr('id'), 'nonce': modal.attr('data-nonce') });
-						});
-						modal.find('button.dismiss-modal').on('click', function(){
-							// send AJAX to close
-							ignore_event = true;
-							closeModal(modal);
-							$.post( EM.ajaxurl, { action : 'em-admin-popup-modal', 'dismiss':'button', 'modal':modal.attr('id'), 'nonce':modal.attr('data-nonce') });
-						});
-					});
-				});
-			</script>
-			<?php
-			static::$output_js = true;
-		}
-	}
-	
-	public static function ajax(){
-		if( !empty($_REQUEST['modal']) && wp_verify_nonce($_REQUEST['nonce'], $_REQUEST['modal']) ){
-			$action = sanitize_key( preg_replace('/^em\-/', '', $_REQUEST['modal']) );
-			$data = is_multisite() ? get_site_option('dbem_data') : get_option('dbem_data');
-			if( $_REQUEST['dismiss'] == 'button' || $data['admin-modals'][$action] === 2 ) {
-				// disable the modal so it's not shown again
-				unset($data['admin-modals'][$action]);
-				if( !empty($data['admin-modals'][$action.'-count']) ) unset($data['admin-modals'][$action.'-count']);
-				is_multisite() ? update_site_option('dbem_data', $data) : update_option('dbem_data', $data);
-			}else{
-				// limit popup to EM pages only
-				$data['admin-modals'][$action] = 2;
-				is_multisite() ? update_site_option('dbem_data', $data) : update_option('dbem_data', $data);
-			}
-		}
-	}
-}
-EM_Admin_Modals::init();
 ?>

@@ -49,6 +49,26 @@ class EM_Ticket extends EM_Object{
 		'ticket_meta' => array('name'=>'ticket_meta','type'=>'%s','null'=>1),
 		'ticket_order' => array('type'=>'%d','null'=>1),
 	);
+	// array map of $fields mapping name to key
+	public static $field_shortcuts = array(
+		'id' => 'ticket_id',
+		'event_id' => 'event_id',
+		'name' => 'ticket_name',
+		'description' => 'ticket_description',
+		'price' => 'ticket_price',
+		'start' => 'ticket_start',
+		'end' => 'ticket_end',
+		'min' => 'ticket_min',
+		'max' => 'ticket_max',
+		'spaces' => 'ticket_spaces',
+		'members' => 'ticket_members',
+		'members_roles' => 'ticket_members_roles',
+		'guests' => 'ticket_guests',
+		'required' => 'ticket_required',
+		'parent' => 'ticket_parent',
+		'meta' => 'ticket_meta',
+		'order' => 'ticket_order',
+	);
 	//Other Vars
 	/**
 	 * Contains only bookings belonging to this ticket.
@@ -77,6 +97,10 @@ class EM_Ticket extends EM_Object{
 	 * @var EM_Event
 	 */
 	protected $event;
+	/**
+	 * @var bool flag whether ticket is available, saved for persistence
+	 */
+	protected $is_available;
 	
 	/**
 	 * Creates ticket object and retreives ticket data (default is a blank ticket object). Accepts either array of ticket data (from db) or a ticket id.
@@ -172,6 +196,9 @@ class EM_Ticket extends EM_Object{
 			if( !$EM_DateTime->valid ) return false;
 			$when_prop = 'ticket_'.$prop;
 			$this->{$when_prop} = $EM_DateTime->getDateTime();
+		}elseif( $prop == 'is_available' && $val === null ) {
+			// reset available value so it forces a refresh
+			$this->is_available = null;
 		}
 		parent::__set( $prop, $val );
 	}
@@ -533,7 +560,7 @@ class EM_Ticket extends EM_Object{
 		    $ticket_available_spaces = $ticket_available_spaces - $this->get_pending_spaces();
 		}
 		$return = ($ticket_available_spaces <= $event_available_spaces) ? $ticket_available_spaces:$event_available_spaces;
-		return apply_filters('em_ticket_get_available_spaces', $return, $this);
+		return apply_filters( 'em_ticket_get_available_spaces', $return, $this, array('event_spaces' => $event_available_spaces, 'ticket_spaces' => $ticket_available_spaces) );
 	}
 	
 	/**
@@ -722,11 +749,12 @@ class EM_Ticket extends EM_Object{
 	 */
 	function get_spaces_options($zero_value = true, $default_value = 0){
 		$available_spaces = $this->get_available_spaces();
-		if( EM_Bookings::$disable_restrictions ) $available_spaces = get_option('dbem_bookings_form_max');
+		$max_spaces = get_option('dbem_bookings_form_max');
+		if( EM_Bookings::$disable_restrictions && $max_spaces > $available_spaces ) $available_spaces = $max_spaces;
 		if( $this->is_available() ) {
 		    $min_spaces = $this->get_spaces_minimum();
 		    if( $default_value > 0 ){
-			    $default_value = $min_spaces > $default_value ? $min_spaces:$default_value;
+			    $default_value = $min_spaces > $default_value ? $min_spaces:absint($default_value);
 		    }else{
 		        $default_value = $this->is_required() ? $min_spaces:0;
 		    }
@@ -735,14 +763,14 @@ class EM_Ticket extends EM_Object{
 			<select name="em_tickets[<?php echo $this->ticket_id ?>][spaces]" class="em-ticket-select" id="em-ticket-spaces-<?php echo $this->ticket_id ?>" data-ticket-id="<?php echo esc_attr($this->ticket_id); ?>">
 				<?php 
 					$min = ($this->ticket_min > 0) ? $this->ticket_min:1;
-					$max = ($this->ticket_max > 0) ? $this->ticket_max:get_option('dbem_bookings_form_max');
+					$max = ($this->ticket_max > 0) ? $this->ticket_max:$max_spaces;
 					if( $this->get_event()->event_rsvp_spaces > 0 && $this->get_event()->event_rsvp_spaces < $max ) $max = $this->get_event()->event_rsvp_spaces;
 				?>
 				<?php if($zero_value && !$this->is_required()) : ?><option>0</option><?php endif; ?>
 				<?php for( $i=$min; $i<=$available_spaces && $i<=$max; $i++ ): ?>
-					<option <?php if($i == $default_value){ echo 'selected="selected"'; $shown_default = true; } ?>><?php echo $i ?></option>
+					<option <?php if($i == $default_value){ echo 'selected="selected"'; $shown_default = true; } ?>><?php echo absint($i) ?></option>
 				<?php endfor; ?>
-				<?php if(empty($shown_default) && $default_value > 0 ): ?><option selected="selected"><?php echo $default_value; ?></option><?php endif; ?>
+				<?php if(empty($shown_default) && $default_value > 0 ): ?><option selected="selected"><?php echo absint($default_value); ?></option><?php endif; ?>
 			</select>
 			<?php 
 			return apply_filters('em_ticket_get_spaces_options', ob_get_clean(), $zero_value, $default_value, $this);

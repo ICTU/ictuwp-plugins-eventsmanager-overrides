@@ -1,8 +1,8 @@
 <?php if( !function_exists('current_user_can') || !current_user_can('manage_options') ) return; ?>
 <!-- GENERAL OPTIONS -->
-<div class="em-menu-general em-menu-group">
+<div class="em-menu-general em-menu-group em">
 	<div  class="postbox " id="em-opt-general"  >
-	<div class="handlediv"><br /></div> <h3><span><?php _e ( 'General Options', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div> <h3><span><?php _e ( 'General Options', 'events-manager'); ?> </span></h3>
 	<div class="inside">
         <table class="form-table">
             <?php em_options_radio_binary ( __( 'Disable thumbnails?', 'events-manager'), 'dbem_thumbnails_enabled', __( 'Select yes to disable Events Manager from enabling thumbnails (some themes may already have this enabled, which we cannot be turned off here).','events-manager') );  ?>					
@@ -51,6 +51,7 @@
 			if( get_option('dbem_attributes_enabled') ){
 				em_options_textarea ( sprintf(__( '%s Attributes', 'events-manager'),__('Event','events-manager')), 'dbem_placeholders_custom', sprintf(__( "You can also add event attributes here, one per line in this format <code>#_ATT{key}</code>. They will not appear on event pages unless you insert them into another template below, but you may want to store extra information about an event for other uses. <a href='%s'>More information on placeholders.</a>", 'events-manager'), EM_ADMIN_URL .'&amp;page=events-manager-help') );
 			}
+			do_action('em_settings_general_events_footer');
 			?>
 			<tr class="em-header">
 				<td colspan="2">
@@ -140,7 +141,7 @@
 	<?php if ( !is_multisite() || (em_wp_is_super_admin() && !get_site_option('dbem_ms_global_caps')) ){ em_admin_option_box_caps(); } ?>
 
 	<div  class="postbox" id="em-opt-google-maps" >
-		<div class="handlediv"><br /></div><h3><span><?php _e ( 'Google Maps and Location Services', 'events-manager'); ?></span></h3>
+		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Google Maps and Location Services', 'events-manager'); ?></span></h3>
 		<div class="inside">
 			<div class="em-boxheader">
 				<p><?php esc_html_e('Google Maps API provides you with ways to display maps of your locations and help site visitors find events near their desired locations.','events-manager'); ?></p>
@@ -157,7 +158,8 @@
 				?>
 				<tbody class="form-table em-google-maps-enabled">
 					<?php
-					em_options_input_text(__('Google Maps API Browser Key','events-manager'), 'dbem_google_maps_browser_key', sprintf(__('Google Maps require an API key, please see our %s page for instructions on obtaining one.', 'events-manager'), '<a href="https://wp-events-plugin.com/documentation/google-maps/api-key/?utm_source=plugin&utm_medium=settings&utm_campaign=gmaps-api-key">'.esc_html__('documentation','events-manager').'</a>'));
+					$restrict_warning = '<strong>'. sprintf( esc_html__('WARNING : Restrict your API key to prevent unauthorized use and quota theft. See our %s page for more information.', 'events-manager'), '<a href="https://wp-events-plugin.com/documentation/google-maps/api-key/?utm_source=plugin&utm_medium=settings&utm_campaign=gmaps-api-key">'.esc_html__('documentation','events-manager').'</a>' ) . '</strong>';
+					em_options_input_text(__('Google Maps API Browser Key','events-manager'), 'dbem_google_maps_browser_key', sprintf(__('Google Maps require an API key, please see our %s page for instructions on obtaining one.', 'events-manager'), '<a href="https://wp-events-plugin.com/documentation/google-maps/api-key/?utm_source=plugin&utm_medium=settings&utm_campaign=gmaps-api-key">'.esc_html__('documentation','events-manager').'</a>') . '<br>' . $restrict_warning);
 					$google_map_options = apply_filters('em_settings_google_maps_options', array(
 						'dynamic' => _x('Dynamic', 'Google Map Type', 'events-manager'),
 						'embed' => _x('Embedded', 'Google Map Type', 'events-manager')
@@ -181,7 +183,7 @@
 	</div> <!-- .postbox -->
 	
 	<div  class="postbox" id="em-opt-event-submissions" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Event Submission Forms', 'events-manager'); ?></span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Event Submission Forms', 'events-manager'); ?></span></h3>
 	<div class="inside">
             <table class="form-table">
             <tr><td colspan="2" class="em-boxheader">
@@ -212,7 +214,7 @@
 	<?php do_action('em_options_page_event_submission_after'); ?>
 
 	<div  class="postbox event-active-status-option" id="em-opt-event-cancellation" >
-		<div class="handlediv"><br /></div><h3><span><?php _e ( 'Event Cancellation', 'events-manager'); ?></span></h3>
+		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Event Cancellation', 'events-manager'); ?></span></h3>
 		<div class="inside">
 			<table class="form-table">
 				<tr><td colspan="2" class="em-boxheader">
@@ -231,11 +233,56 @@
 	</div> <!-- .postbox -->
 	<?php do_action('em_options_page_event_cancellation_after'); ?>
 
+	<?php if( defined('EM_PHONE_INTL_ENABLED') && EM_PHONE_INTL_ENABLED ) : ?>
+	<div  class="postbox " id="em-opt-automation" >
+		<div class="handlediv" title="<?php esc_attr_e_emp('Click to toggle', 'events-manager'); ?>"><br /></div><h3><?php esc_html_e ( 'Phone Numbers', 'em-pro' ); ?></h3>
+		<div class="inside">
+			<table class='form-table'>
+				<tr class="em-boxheader"><td colspan='2'>
+						<p>
+							<?php
+								esc_html_e( 'Phone numbers can be used for further contact for both those that make bookings and submit events. We offer an advanced international-compatible phone input field with multiple options which standardize and ensure valid/consistent international phone numbers are provided by your users.', 'em-pro' );
+								//You can further customize all these templates, or parts of them by overriding our template files as per our %s.
+							?>
+						</p>
+						<p>
+							<?php
+							echo sprintf( esc_html__('We recommend enabling this feature, as all numbers are stored in the international standard %s. Even if you require national numbers from one country, to ensure compatibility with all phone-related features, otherwise a simple text field is provided for phone input.', 'em-pro'), '<a href="https://wikipedia.org/wiki/E.164">E.164</a>' );
+							?>
+						</p>
+					</td></tr>
+				<?php
+					em_options_radio_binary ( sprintf(_x( 'Enable %s?', 'Enable a feature in settings page', 'em-pro' ), esc_html__('Phone Numbers', 'em-pro')), 'dbem_phone_enabled', esc_html__('When enabled, phone number fields will include special international (or national) formatting and validation.', 'em-pro'), '', '.em-phone-options');
+				?>
+				<tbody class="em-phone-options">
+					<?php
+						$phone_countries = em_get_countries();
+						unset($phone_countries['AQ']); // remove Antarctica, no dialcode
+						em_options_select( esc_html__('Default Country', 'em-pro'), 'dbem_phone_default_country', $phone_countries, '', '', array(), array('selectize' => true) );
+						// phone national number
+						em_options_radio_binary( esc_html__('National Formatting', 'em-pro'), 'dbem_phone_national_format', sprintf(esc_html__('Numbers will be displayed in national format style, such as %s for US numbers.', 'em-pro'), '<code>(201) 555-1325</code>') );
+						em_options_radio_binary( esc_html__('Show Selected Dialcode', 'em-pro'), 'dbem_phone_show_selected_code', esc_html__('The selected country code will also show the dialcode, such as +1 for the US.', 'em-pro') );
+						em_options_radio_binary( esc_html__('Show Flags', 'em-pro'), 'dbem_phone_show_flags', esc_html__('Show the flag of the selected country code and in the country selection list of the phone input field.', 'em-pro') );
+						
+						em_options_radio_binary( esc_html__('Detect User Country', 'em-pro'), 'dbem_phone_detect', esc_html__('We will attempt to detect the location of the user based on their browser timezone and auto-select the corresponding country accordingly.', 'em-pro') );
+						em_options_select( esc_html__('Preferred Countries', 'em-pro'), 'dbem_phone_countries_preferred', $phone_countries, esc_html__('The selected countries will appear at the top of the country selection list.', 'em-pro'), '', array(), array('selectize' => true, 'multiple' => true) );
+						em_options_select( esc_html__('Include Countries', 'em-pro'), 'dbem_phone_countries_include', $phone_countries, esc_html__('Only the selected countries will be included in the country selection list.', 'em-pro'), '', array(), array('selectize' => true, 'multiple' => true) );
+						em_options_select( esc_html__('Exclude Countries', 'em-pro'), 'dbem_phone_countries_exclude', $phone_countries, esc_html__('These countries will be excluded from the country selection list, this takes precedence over included countries.', 'em-pro'), '', array(), array('selectize' => true, 'multiple' => true) );
+					?>
+				</tbody>
+				<?php echo $save_button; ?>
+			</table>
+		</div> <!-- . inside -->
+	</div> <!-- .postbox -->
+	<?php do_action('em_options_page_phone_after'); ?>
+	<?php endif; ?>
+
+
 	<?php do_action('em_options_page_footer'); ?>
 	
 	<?php /* 
 	<div  class="postbox" id="em-opt-geo" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Geo APIs', 'events-manager'); ?> <em>(Beta)</em></span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Geo APIs', 'events-manager'); ?> <em>(Beta)</em></span></h3>
 	<div class="inside">
 		<p><?php esc_html_e('Geocoding is the process of converting addresses into geographic coordinates, which can be used to find events and locations near a specific coordinate.','events-manager'); ?></p>
 		<table class="form-table">
@@ -257,7 +304,7 @@
 	*/ ?>
 	
 	<div  class="postbox" id="em-opt-performance-optimization" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Performance Optimization', 'events-manager'); ?> (<?php _e('Advanced','events-manager'); ?>)</span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Performance Optimization', 'events-manager'); ?> (<?php _e('Advanced','events-manager'); ?>)</span></h3>
 	<div class="inside">
 		<?php 
 			$performance_opt_page_instructions = __('In the boxes below, you are expected to write the page IDs. For multiple pages, use comma-separated values e.g. 1,2,3. Entering 0 means EVERY page, -1 means the home page.','events-manager');
@@ -335,7 +382,7 @@
 	</div> <!-- .postbox --> 
 	
 	<div  class="postbox" id="em-opt-style-options" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Styling Options', 'events-manager'); ?> (<?php _e('Advanced','events-manager'); ?>)</span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Styling Options', 'events-manager'); ?> (<?php _e('Advanced','events-manager'); ?>)</span></h3>
 	<div class="inside">
 		<p style="font-weight:bold; font-size:110%;">
 			<?php echo sprintf( esc_html__('We strongly recommend you check out our %s before disabling any styling here, in most cases you can make profound changes with a few line of CSS or PHP', 'events-manager'), '<a href="#" target="_blank">'. esc_html__('documentation', 'events-manager').'</a>' ); ?>

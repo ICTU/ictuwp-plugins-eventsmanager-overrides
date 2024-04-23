@@ -258,7 +258,7 @@ class Dashboard {
 			'price' => __('Sales', 'events-manager'),
 		);
 		// get scopes
-		$scopes = array(); // we'll nt a rann of dates her regardeless
+		$scopes = array(); // we'll get a range of dates here regardeless
 		$today = date('Y-m-d');
 		if( $args['range_type'] === 'custom' && !empty($args['range_dates'][0]) ){
 			$scope_dates[0] = $args['range_dates'][0];
@@ -291,8 +291,9 @@ class Dashboard {
 		// get compare data scopes
 		if( $args['range_type'] !== 'all' && in_array( $args['compare'], array('custom', 'previous', 'year')) ) {
 			// get difference of dates for first scope and add it to the base date via DateTime
-			$end_scope_date   = count( $scope_dates[0] ) > 1 ? $scope_dates[0][1] : 'now';
-			$base_start_scope = new EM_DateTime( $scope_dates[0][0], 'UTC' );
+			$start_scope_date = is_array($scope_dates[0]) ? $scope_dates[0][1] : $scope_dates[0];
+			$end_scope_date   = is_array($scope_dates[0]) && !empty($scope_dates[0][1]) ? $scope_dates[0][1] : 'now';
+			$base_start_scope = new EM_DateTime( $start_scope_date, 'UTC' );
 			$base_end_scope   = new EM_DateTime( $end_scope_date, 'UTC' );
 			$interval         = $base_end_scope->diff( $base_start_scope, true );
 			if ( $args['compare'] === 'custom' && ! empty( $args['range_dates'][1] ) ) {
@@ -707,6 +708,12 @@ class Dashboard {
 			// get data
 			$sql = 'SELECT ' . implode( ', ', $summaries) .' , '. implode( ', ', $averages ) . ' FROM ' . EM_BOOKINGS_TABLE . $where;
 			$booking_data = $wpdb->get_row( $sql, ARRAY_A );
+			// clean null data to 0 and add to stats
+			foreach ( $booking_data as $k => $v ) {
+				if( $v === null ) {
+					$booking_data[ $k ] = 0;
+				}
+			}
 			$stats->stats[$stack] = $booking_data;
 		}
 		return $stats;

@@ -9,6 +9,7 @@ class EM_Object {
 	 * @var array Associative array of shortname => property names for this object. For example, an EM_Event object will have a 'language' key to 'event_language' value.
 	 */
 	protected $shortnames = array();
+	protected static $field_shortcuts = array();
 	var $required_fields = array();
 	var $feedback_message = "";
 	var $errors = array();
@@ -23,6 +24,12 @@ class EM_Object {
 	 * @var string
 	 */
 	protected static $context = 'object_type';
+	
+	/**
+	 * An array of dynamic properties which instead of being stored as a dynamic class property to prevent deprecated php 8.2 notices
+	 * @var array
+	 */
+	protected $dynamic_properties = array();
 	
 	/**
 	 * Takes the array and provides a clean array of search parameters, along with details
@@ -1090,7 +1097,7 @@ class EM_Object {
 		}
 		//go through default arguments (if defined) and build a list of unique non-default arguments that should go into the querystring
 		$unique_args = array(); //this is the set of unique arguments we'll add to the querystring
-		$ignored_args = array('offset', 'ajax', 'array', 'pagination','format','format_header','format_footer'); 
+		$ignored_args = array('offset', 'ajax', 'array', 'pagination','format','format_header','format_footer','page');
 		foreach( $default_args as $arg_key => $arg_default_val){
 			if( array_key_exists($arg_key, $args) && !in_array($arg_key, $ignored_args) ){
 				//if array exists, implode it in case one value is already imploded for matching purposes
@@ -1114,8 +1121,12 @@ class EM_Object {
 		//if we're in an ajax call, make sure we aren't calling admin-ajax.php
 		if( defined('DOING_AJAX') ) $page_url = em_wp_get_referer();
 		//finally, glue the url with querystring and pass onto pagination function
-		$page_link_template = em_add_get_params($page_url, $pag_args, false); //don't html encode, so em_paginate does its thing;
-		if( empty($args['ajax']) || defined('DOING_AJAX') ) $unique_args = array(); //don't use data method if ajax is disabled or if we're already in an ajax request (SERP irrelevenat)
+		$page_args_escaped = array();
+		foreach( $pag_args as $key => $val ){
+			$page_args_escaped[$key] = $val && is_string($val) ? urlencode($val) : $val;
+		}
+		$page_link_template = em_add_get_params($page_url, $page_args_escaped, false, false); //don't html encode, so em_paginate does its thing;
+		//if( empty($args['ajax']) || defined('DOING_AJAX') ) $unique_args = array(); //don't use data method if ajax is disabled or if we're already in an ajax request (SERP irrelevenat)
 		$return = apply_filters('em_object_get_pagination_links', em_paginate( $page_link_template, $count, $limit, $page, $unique_args, !empty($args['ajax']) ), $page_link_template, $count, $limit, $page);
 		//if PHP is 5.3 or later, you can specifically filter by class e.g. em_events_output_pagination - this replaces the old filter originally located in the actual child classes
 		if( function_exists('get_called_class') ){
@@ -1125,29 +1136,53 @@ class EM_Object {
 	}
 	
 	public function __get( $shortname ){
-		if( !empty($this->shortnames[$shortname]) ){
+		if ( !empty(static::$field_shortcuts[$shortname]) ){
+			$property = static::$field_shortcuts[$shortname];
+			return $this->{$property};
+		} elseif ( !empty($this->shortnames[$shortname]) ){
 			$property = $this->shortnames[$shortname];
 			return $this->{$property};
+		} elseif ( isset($this->dynamic_properties[$shortname]) ) {
+			return $this->dynamic_properties[$shortname];
 		}
 		return null;
 	}
 	
+	/**
+	 * Sets a property of this object, either in the object itself or in the dynamic_properties array. Accepts shortcut names for properties as mapped by the $field_shortcuts or $shortnames array.
+	 * @param string $prop
+	 * @param mixed $val
+	 */
 	public function __set($prop, $val ){
-		if( !empty($this->shortnames[$prop]) ){
+		if ( !empty(static::$field_shortcuts[$prop]) ) {
+			$property = static::$field_shortcuts[$prop];
+			if( !empty($this->fields[$property]['type']) && $this->fields[$property]['type'] == '%d' ){
+				$val = absint($val);
+			}
+			$this->{$property} = $val;
+		} elseif ( !empty($this->shortnames[$prop]) ) {
 			$property = $this->shortnames[$prop];
 			if( !empty($this->fields[$property]['type']) && $this->fields[$property]['type'] == '%d' ){
 				$val = absint($val);
 			}
 			$this->{$property} = $val;
-		}else{
-			$this->{$prop} = $val;
+		} else {
+			// save it to an declared array property to avoid 8.2 errors, access it the same way
+			$this->dynamic_properties[$prop] = $val;
 		}
 	}
 	
+	/**
+	 * Checks if a property has been set, either in the object itself or in the dynamic_properties array.
+	 * @param string $prop
+	 * @return boolean
+	 */
 	public function __isset( $prop ){
 		if( !empty($this->shortnames[$prop]) ){
 			$property = $this->shortnames[$prop];
 			return !empty($this->{$property});
+		} elseif ( isset($this->dynamic_properties[$prop]) ) {
+			return isset($this->dynamic_properties[$prop]);
 		}
 		return !empty($this->{$prop});
 	}
@@ -1411,7 +1446,28 @@ class EM_Object {
 			}
 		}
 		return (!in_array(false, $results) && count($results) > 0);
-	}	
+	}
+
+	/**
+	 * Checks and returns a sanitized array of integer numbers
+	 * @param $array
+	 *
+	 * @return array
+	 */
+	public static function sanitize_numeric_array( $array ) {
+		$sanitized_array = array();
+		if ( !is_array( $array ) ) {
+			$array = explode( ',', $array );
+		}
+		if( static::array_is_numeric( $array ) ) {
+			foreach ( $array as $key => $value ) {
+				if ( is_numeric( $value ) ) {
+					$sanitized_array[ $key ] = intval($value);
+				}
+			}
+		}
+		return $sanitized_array;
+	}
 	
 	/**
 	 * Returns an array of errors in this object
@@ -1754,9 +1810,14 @@ class EM_Object {
 	}
 	
 	/**
-	 * Used to process any tables containing meta, such as bookings_meta or tickets_bookings_meta
-	 * This may likely be moved into another object, which children extend instead of this. If you choose to depend on this function, keep an eye out in future updates, you're best off copying the code for now
-	 * @param array $raw_meta
+	 * Process meta stored in a meta table. Meta stored without a preceding _ are considered as-is values and added as a key/value pair to returned meta array, otherwise they are considered as arrays and parsed accordingly, so that each array item is stored as a separate row in the database and rebuilt when loaded.
+	 *
+	 * Prior to EM 6.4.5.1, arrays were stored by delimiting the key and subkey by an underscore, but this will cause issues if the key itself contains an underscore. As of 6.5 a keys will be delimited by a pipe instead, to allow for underscore use as needed.
+	 * Backward compatibility is still supported for older records that weren't stored with a pipe and the last underscore is considered the delimiter for the subkey. Developers should ensure if they have keys and subkeys with underscores to find a way to migrate that info with SQL to add a pipe in between.
+	 * This decision was taken because tickets in our core code do not have any subkeys contaning underscores, therefore considered a 'safe' approach.
+	 *
+	 * @param $raw_meta
+	 *
 	 * @return array
 	 */
 	function process_meta( $raw_meta ){
@@ -1764,11 +1825,11 @@ class EM_Object {
 		foreach( $raw_meta as $meta ){
 			$meta_value = maybe_unserialize($meta['meta_value']);
 			$meta_key = $meta['meta_key'];
-			if( preg_match('/^_([a-zA-Z\-0-9]+)_/', $meta_key, $match) ){
+			if( preg_match('/^_([a-zA-Z\-0-9 _]+)\|([a-zA-Z\-0-9 _]+)?$/', $meta_key, $match) || preg_match('/^_([a-zA-Z\-0-9 _]+)_([^_]+)$/', $meta_key, $match) ){
 				$key = $match[1];
-				$subkey = str_replace('_'.$key.'_', '', $meta_key);
 				if( empty($processed_meta[$key]) ) $processed_meta[$key] = array();
-				if( !empty($processed_meta[$key][$subkey]) ){
+				$subkey = isset($match[2]) ? $match[2] : count($processed_meta[$key]); // allows for storing arrays without a key, such as _beverage_choice| can be stored multiple times in a row if key is not relevant
+				if( !empty($processed_meta[$key][$subkey]) && preg_match('/\|$/', $meta_key) ){
 					if( !is_array($processed_meta[$key][$subkey]) ) {
 						$processed_meta[$key][$subkey] = array($processed_meta[$key][$subkey]);
 					}

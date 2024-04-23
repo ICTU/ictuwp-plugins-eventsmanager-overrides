@@ -44,7 +44,7 @@
 							<?php
 						}
 						?>
-						<a href="<?php echo wp_lostpassword_url(); ?>"><?php esc_html_e('Lost your password?', 'events-manager') ?></a>
+						<a href="<?php echo wp_lostpassword_url(); ?>" title="<?php esc_html_e('Password Lost and Found', 'events-manager') ?>"><?php esc_html_e('Lost your password?', 'events-manager') ?></a>
 					</div>
 				</div>
 			</div>

@@ -459,7 +459,7 @@ class EM_Calendar extends EM_Object {
 			}else{
 				$calendar_array['css']['dates_classes'][] = 'even-aspect';
 			}
-			if( isset($args['calendar_size']) ){
+			if( isset($args['calendar_size']) && $args['calendar_size'] ){
 				// calendar won't switch responsively
 				$calendar_array['css']['calendar_classes'][] = 'size-'.$args['calendar_size'];
 				$calendar_array['css']['calendar_classes'][] = 'size-fixed';
@@ -490,7 +490,7 @@ class EM_Calendar extends EM_Object {
 				$custom_args = array('global' => array(), 'search' => array(), 'calendar' => array());
 				foreach( $args as $name => $value ){
 					if( in_array($name, $ignore_keys) ) continue;
-					if( $name === 'scope' ) $value = $value['name'];
+					if( $name === 'scope' && !empty($value['name']) ) $value = $value['name'];
 					if( is_array($value) ) $value = implode(',', $value);
 					if( $value === true || $value === false ) $value = $value ? 1:0; // make sure we get a 1 or 0
 					if( in_array($name, $global_args_keys) ){
@@ -606,7 +606,7 @@ class EM_Calendar extends EM_Object {
 		$defaults = array( 
 			'recurring' => false, //we don't initially look for recurring events only events and recurrences of recurring events
 			//'full' => 0, //Will display a full calendar with event names
-			'calendar_size' => 'small',
+			'calendar_size' => null,
 			'long_events' => 0, //Events that last longer than a day
 			'scope' => false,
 			'status' => 1, //approved events only
