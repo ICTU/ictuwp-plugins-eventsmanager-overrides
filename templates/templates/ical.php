@@ -81,13 +81,15 @@ while ( count($EM_Events) > 0 ){
 		}
 		
 		//formats
-		$summary = em_mb_ical_wordwrap('SUMMARY:'.$EM_Event->output($summary_format,'ical'));
-		$description = em_mb_ical_wordwrap('DESCRIPTION:'.$EM_Event->output($description_format,'ical'));
+		$summary_raw = apply_filters('em_ical_output_content_summary', $EM_Event->output($summary_format,'ical'), $EM_Event, $args);
+		$summary = em_mb_ical_wordwrap('SUMMARY:'.$summary_raw);
+		$description_raw = apply_filters('em_ical_output_content_description', $EM_Event->output($description_format,'ical'), $EM_Event, $args);
+		$description = em_mb_ical_wordwrap('DESCRIPTION:'. $description_raw);
 		$url = 'URL:'.$EM_Event->get_permalink();
 		$url = wordwrap($url, 74, "\n ", true);
-		$location = $geo = $apple_geo = $apple_location = $apple_location_title = $apple_structured_location = $categories = false;
+		$location = $location_raw = $geo = $apple_geo = $apple_location = $apple_location_title = $apple_structured_location = $categories = false;
 		if( $EM_Event->location_id ){
-			$location = em_mb_ical_wordwrap('LOCATION:'.$EM_Event->output($location_format, 'ical'));
+			$location_raw = $EM_Event->output($location_format, 'ical');
 			if( $EM_Event->get_location()->location_latitude || $EM_Event->get_location()->location_longitude ){
 				$geo = 'GEO:'.$EM_Event->get_location()->location_latitude.";".$EM_Event->get_location()->location_longitude;
 			}
@@ -102,8 +104,12 @@ while ( count($EM_Events) > 0 ){
 		}elseif( $EM_Event->has_event_location() ){
 			$ical_location = $EM_Event->get_event_location()->get_ical_location();
 			if( $ical_location ){
-				$location = em_mb_ical_wordwrap('LOCATION:'.$ical_location);
+				$location_raw = $ical_location;
 			}
+		}
+		if( $location_raw ) {
+			$location_raw = apply_filters('em_ical_output_content_location', $location_raw, $EM_Event, $args);
+			$location = em_mb_ical_wordwrap('LOCATION:'. $location_raw);
 		}
 		$categories = array();
 		foreach( $EM_Event->get_categories() as $EM_Category ){ /* @var EM_Category $EM_Category */
@@ -115,7 +121,6 @@ while ( count($EM_Events) > 0 ){
 		$UID = $EM_Event->event_id . '@' . $site_domain;
 		if( is_multisite() ) $UID = absint($EM_Event->blog_id) . '-' . $UID;
 		$UID = wordwrap("UID:".$UID, 74, "\r\n ", true);
-		
 //output ical item		
 $output = "\r\n"."BEGIN:VEVENT
 {$UID}
@@ -159,6 +164,8 @@ if( !empty($include_organizer) ){
 	$EM_Person = new EM_Person($EM_Event->get_owner());
 	$output .= "\r\n" . 'ORGANIZER;CN="'. $EM_Person->get_name() .'":MAILTO:'. $EM_Person->user_email;
 }
+// allow for filters to intervene the output
+$output = apply_filters('em_ical_event_output_content', $output, $EM_Event);
 //end the event
 $output .= "
 END:VEVENT";

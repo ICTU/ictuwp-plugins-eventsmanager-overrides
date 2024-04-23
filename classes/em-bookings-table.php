@@ -68,6 +68,10 @@ class EM_Bookings_Table extends EM\List_Table {
 	public $bookings;
 	public $bookings_count = 0;
 	
+	public $person;
+	public $event;
+	public $item_type;
+	
 	function __construct($show_tickets = true){
 		$this->uid = $this->id . '-' . rand(1,99999);
 		$this->statuses = array(
@@ -115,6 +119,7 @@ class EM_Bookings_Table extends EM\List_Table {
 			'dbem_phone'=>__('Phone Number','events-manager'),
 			'booking_spaces'=>__('Spaces','events-manager'),
 			'booking_status'=>__('Status','events-manager'),
+			'booking_rsvp_status'=>__('RSVP Status','events-manager'),
 			'booking_date'=>__('Booking Date','events-manager'),
 			'booking_price'=>__('Total','events-manager'),
 			'booking_id'=>__('Booking ID','events-manager'),
@@ -372,7 +377,7 @@ class EM_Bookings_Table extends EM\List_Table {
 								<option value="10">10</option>
 								<option value="25">25</option>
 								<option value="50">50</option>
-								<option  value="100">100</option><option value="250">250</option><option value="500">500</option><option value="2000">2000</option><option value="5000">5000</option><option value="10000">10000</option>
+								<option value="100">100</option>
 							</select>
 						</div>
 						<div class="em-bookings-table-cols">
@@ -385,7 +390,7 @@ class EM_Bookings_Table extends EM\List_Table {
 									<?php foreach( $this->cols as $col_key ): ?>
 										<div class="item" data-value="<?php echo esc_attr($col_key); ?>">
 											<span><?php echo esc_html($this->cols_template[$col_key]); ?></span>
-											<a href="#" class="remove" tabindex="-1">×</a>
+											<a href="#" class="remove" tabindex="-1" title="Remove">×</a>
 											<input type="hidden" name="cols[<?php echo esc_attr($col_key); ?>]" value="1" class="em-bookings-col-item" />
 										</div>
 									<?php endforeach; ?>
@@ -448,7 +453,7 @@ class EM_Bookings_Table extends EM\List_Table {
 									<?php foreach( $this->cols as $col_key ): ?>
 										<div class="item" data-value="<?php echo esc_attr($col_key); ?>">
 											<span><?php echo esc_html($this->cols_template[$col_key]); ?></span>
-											<a href="#" class="remove" tabindex="-1">×</a>
+											<a href="#" class="remove" tabindex="-1" title="Remove">×</a>
 											<input type="hidden" name="cols[<?php echo esc_attr($col_key); ?>]" value="1" class="em-bookings-col-item" />
 										</div>
 									<?php endforeach; ?>
@@ -518,21 +523,22 @@ class EM_Bookings_Table extends EM\List_Table {
 		<div class='<?php echo $id; ?> em_obj frontend' id="<?php echo $id; ?>">
 			<form class='bookings-filter' method='post' action='' id="<?php echo $uid; ?>-form">
 				<?php if( $EM_Event !== false ): ?>
-				<input type="hidden" name="event_id" value='<?php echo esc_attr($EM_Event->event_id); ?>' />
+				<input type="hidden" name="event_id" value='<?php echo esc_attr($EM_Event->event_id); ?>' >
 				<?php endif; ?>
 				<?php if( $EM_Ticket !== false ): ?>
-				<input type="hidden" name="ticket_id" value='<?php echo esc_attr($EM_Ticket->ticket_id); ?>' />
+				<input type="hidden" name="ticket_id" value='<?php echo esc_attr($EM_Ticket->ticket_id); ?>' >
 				<?php endif; ?>
 				<?php if( $EM_Person !== false ): ?>
-				<input type="hidden" name="person_id" value='<?php echo esc_attr($EM_Person->ID); ?>' />
+				<input type="hidden" name="person_id" value='<?php echo esc_attr($EM_Person->ID); ?>' >
 				<?php endif; ?>
-				<input type="hidden" name="is_public" value="<?php echo ( !empty($_REQUEST['is_public']) || !is_admin() ) ? 1:0; ?>" />
-				<input type="hidden" name="pno" value='<?php echo esc_attr($this->page); ?>' />
-				<input type="hidden" name="order" value='<?php echo esc_attr($this->order); ?>' />
-				<input type="hidden" name="orderby" value='<?php echo esc_attr($this->orderby); ?>' />
-				<input type="hidden" name="_wpnonce" value="<?php echo ( !empty($_REQUEST['_wpnonce']) ) ? esc_attr($_REQUEST['_wpnonce']):wp_create_nonce('em_bookings_table'); ?>" />
-				<input type="hidden" name="action" value="em_bookings_table" />
-				<input type="hidden" name="cols" value="<?php echo esc_attr(implode(',', $this->cols)); ?>" />
+				<input type="hidden" name="is_public" value="<?php echo ( !empty($_REQUEST['is_public']) || !is_admin() ) ? 1:0; ?>" >
+				<input type="hidden" name="pno" value='<?php echo esc_attr($this->page); ?>' >
+				<input type="hidden" name="order" value='<?php echo esc_attr($this->order); ?>' >
+				<input type="hidden" name="orderby" value='<?php echo esc_attr($this->orderby); ?>' >
+				<input type="hidden" name="_wpnonce" value="<?php echo ( !empty($_REQUEST['_wpnonce']) ) ? esc_attr($_REQUEST['_wpnonce']):wp_create_nonce('em_bookings_table'); ?>" >
+				<input type="hidden" name="action" value="em_bookings_table" >
+				<input type="hidden" name="cols" value="<?php echo esc_attr(implode(',', $this->cols)); ?>" >
+				<input type="hidden" name="table_id" value="<?php echo absint( str_replace($this->id . '-', '', $this->uid) ); ?>">
 				
 				<div class='tablenav'>
 					<?php
@@ -581,6 +587,7 @@ class EM_Bookings_Table extends EM\List_Table {
 										?><td class="em-bt-col-<?php echo esc_attr($key); ?>"class="em-bt-col-<?php echo esc_attr($key); ?>"><?php echo $row_cell; ?></td><?php
 										}
 										$this->ticket = null;
+										$count++;
 									}
 								}else{
 									$row = $this->get_row($EM_Booking);
@@ -703,25 +710,25 @@ class EM_Bookings_Table extends EM\List_Table {
 			case 0: //pending
 				if( get_option('dbem_bookings_approval') ){
 					$booking_actions = array(
-						'approve' => '<a class="em-bookings-approve em-bookings-approve-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_approve', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Approve','events-manager').'</a>',
-						'reject' => '<a class="em-bookings-reject em-bookings-reject-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_reject', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Reject','events-manager').'</a>',
-						'delete' => '<span class="trash"><a class="em-bookings-delete em-bookings-delete-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_delete', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Delete','events-manager').'</a></span>',
+						'approve' => '<a class="em-bookings-approve em-bookings-approve-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_approve',  'nonce' => wp_create_nonce('bookings_approve'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Approve','events-manager').'</a>',
+						'reject' => '<a class="em-bookings-reject em-bookings-reject-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_reject',  'nonce' => wp_create_nonce('bookings_reject'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Reject','events-manager').'</a>',
+						'delete' => '<span class="trash"><a class="em-bookings-delete em-bookings-delete-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_delete',  'nonce' => wp_create_nonce('bookings_delete'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Delete','events-manager').'</a></span>',
 						'edit' => '<a class="em-bookings-edit em-bookings-edit-'. $s .'" href="'.em_add_get_params($EM_Booking->get_event()->get_bookings_url(), array('booking_id'=>$EM_Booking->booking_id, 'em_ajax'=>null, 'em_obj'=>null)).'">'.__('Edit/View','events-manager').'</a>',
 					);
 					break;
 				}//if approvals are off, treat as a 1
 			case 1: //approved
 				$booking_actions = array(
-					'unapprove' => '<a class="em-bookings-unapprove" href="'.em_add_get_params($url, array('action'=>'bookings_unapprove', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Unapprove','events-manager').'</a>',
-					'reject' => '<a class="em-bookings-reject em-bookings-reject-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_reject', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Reject','events-manager').'</a>',
-					'delete' => '<span class="trash"><a class="em-bookings-delete em-bookings-delete-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_delete', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Delete','events-manager').'</a></span>',
+					'unapprove' => '<a class="em-bookings-unapprove" href="'.em_add_get_params($url, array('action'=>'bookings_unapprove',  'nonce' => wp_create_nonce('bookings_unapprove'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Unapprove','events-manager').'</a>',
+					'reject' => '<a class="em-bookings-reject em-bookings-reject-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_reject',  'nonce' => wp_create_nonce('bookings_reject'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Reject','events-manager').'</a>',
+					'delete' => '<span class="trash"><a class="em-bookings-delete em-bookings-delete-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_delete',  'nonce' => wp_create_nonce('bookings_delete'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Delete','events-manager').'</a></span>',
 					'edit' => '<a class="em-bookings-edit em-bookings-edit-'. $s .'" href="'.em_add_get_params($EM_Booking->get_event()->get_bookings_url(), array('booking_id'=>$EM_Booking->booking_id, 'em_ajax'=>null, 'em_obj'=>null)).'">'.__('Edit/View','events-manager').'</a>',
 				);
 				break;
 			case 2: //rejected
 				$booking_actions = array(
-					'approve' => '<a class="em-bookings-approve em-bookings-approve-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_approve', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Approve','events-manager').'</a>',
-					'delete' => '<span class="trash"><a class="em-bookings-delete em-bookings-delete-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_delete', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Delete','events-manager').'</a></span>',
+					'approve' => '<a class="em-bookings-approve em-bookings-approve-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_approve',  'nonce' => wp_create_nonce('bookings_approve'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Approve','events-manager').'</a>',
+					'delete' => '<span class="trash"><a class="em-bookings-delete em-bookings-delete-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_delete',  'nonce' => wp_create_nonce('bookings_delete'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Delete','events-manager').'</a></span>',
 					'edit' => '<a class="em-bookings-edit em-bookings-edit-'. $s .'" href="'.em_add_get_params($EM_Booking->get_event()->get_bookings_url(), array('booking_id'=>$EM_Booking->booking_id, 'em_ajax'=>null, 'em_obj'=>null)).'">'.__('Edit/View','events-manager').'</a>',
 				);
 				break;
@@ -729,9 +736,9 @@ class EM_Bookings_Table extends EM\List_Table {
 			case 4: //awaiting online payment - similar to pending but always needs approval in EM Free
 			case 5: //awaiting payment - similar to pending but always needs approval in EM Free
 				$booking_actions = array(
-					'approve' => '<a class="em-bookings-approve em-bookings-approve-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_approve', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Approve','events-manager').'</a>',
-					'reject' => '<a class="em-bookings-reject em-bookings-reject-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_reject', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Reject','events-manager').'</a>',
-					'delete' => '<span class="trash"><a class="em-bookings-delete em-bookings-delete-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_delete', 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Delete','events-manager').'</a></span>',
+					'approve' => '<a class="em-bookings-approve em-bookings-approve-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_approve',  'nonce' => wp_create_nonce('bookings_approve'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Approve','events-manager').'</a>',
+					'reject' => '<a class="em-bookings-reject em-bookings-reject-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_reject',  'nonce' => wp_create_nonce('bookings_reject'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Reject','events-manager').'</a>',
+					'delete' => '<span class="trash"><a class="em-bookings-delete em-bookings-delete-'. $s .'" href="'.em_add_get_params($url, array('action'=>'bookings_delete',  'nonce' => wp_create_nonce('bookings_delete'), 'booking_id'=>$EM_Booking->booking_id)).'">'.__('Delete','events-manager').'</a></span>',
 					'edit' => '<a class="em-bookings-edit em-bookings-edit-'. $s .'" href="'.em_add_get_params($EM_Booking->get_event()->get_bookings_url(), array('booking_id'=>$EM_Booking->booking_id, 'em_ajax'=>null, 'em_obj'=>null)).'">'.__('Edit/View','events-manager').'</a>',
 				);
 				break;
@@ -888,6 +895,8 @@ class EM_Bookings_Table extends EM\List_Table {
 			$val = $EM_Booking->get_price(true);
 		}elseif($col == 'booking_status'){
 			$val = $EM_Booking->get_status(true);
+		} elseif ( $col == 'booking_rsvp_status' ) {
+			$val = $EM_Booking->get_rsvp_status( true );
 		}elseif($col == 'booking_date'){
 			$val = $EM_Booking->date()->i18n( get_option('dbem_date_format').' '. get_option('dbem_time_format') );
 		}elseif($col == 'actions' && $format !== 'csv' ) {
@@ -1081,7 +1090,7 @@ class EM_Bookings_Table extends EM\List_Table {
 		$edit_url = em_add_get_params($EM_Booking->get_event()->get_bookings_url(), array('booking_id'=>$EM_Booking->booking_id, 'em_ajax'=>null, 'em_obj'=>null));
 		ob_start();
 		?>
-		<button type="button" class="<?php echo esc_attr($this->id) ?>-action-shortcuts em-tooltip-ddm em-clickable" data-tooltip-class="<?php echo esc_attr($this->id) ?>-action-shortcuts-tooltip">&centerdot;&centerdot;&centerdot;</button>
+		<button type="button" class="<?php echo esc_attr($this->id) ?>-action-shortcuts em-tooltip-ddm em-clickable" data-tooltip-class="<?php echo esc_attr($this->id) ?>-action-shortcuts-tooltip" title="<?php esc_attr_e('Booking Actions', 'events-manager'); ?>">&centerdot;&centerdot;&centerdot;</button>
 		<div class="em-tooltip-ddm-content em-bookings-admin-get-invoice-content">
 			<?php echo implode("<br>", $actions); ?>
 		</div>

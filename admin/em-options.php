@@ -21,6 +21,7 @@ function em_options_save(){
 					$EM_Notices->add_error( sprintf(esc_html_x('Colors must be in a valid %s format, such as #FF00EE.', 'hex format', 'events-manager'), '<a href="http://en.wikipedia.org/wiki/Web_colors">hex</a>').' '. esc_html__('This setting was not changed.', 'events-manager'), true);					
 				}elseif( $postKey == 'dbem_oauth' && is_array($postValue) ){
 					foreach($postValue as $postValue_key=>$postValue_val){
+						$postValue_val = em_options_save_kses_deep( $postValue_val );
 						EM_Options::set($postValue_key, wp_unslash($postValue_val), 'dbem_oauth');
 					}
 				}else{
@@ -30,6 +31,7 @@ function em_options_save(){
 					}else{
 					    $postValue = wp_unslash($postValue);
 					}
+					$postValue = em_options_save_kses_deep( $postValue );
 					update_option($postKey, $postValue);
 				}
 			}elseif( $postKey == 'dbem_data' && is_array($postValue) ){
@@ -40,6 +42,7 @@ function em_options_save(){
 					}else{
 						$postV = wp_unslash($postV);
 					}
+					$postV = em_options_save_kses_deep( $postV );
 					EM_Options::set( $postK, $postV );
 				}
 			}
@@ -195,6 +198,7 @@ function em_options_save(){
 	//Force Update Recheck - Workaround for now
 	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'recheck_updates' && check_admin_referer('em_recheck_updates_'.get_current_user_id().'_wpnonce') && em_wp_is_super_admin() ){
 		//force recheck of plugin updates, to refresh dl links
+		remove_all_actions('pre_set_site_transient_update_plugins');
 		delete_transient('update_plugins');
 		delete_site_transient('update_plugins');
 		$EM_Notices->add_confirm(__('If there are any new updates, you should now see them in your Plugins or Updates admin pages.','events-manager'), true);
@@ -346,6 +350,23 @@ function em_options_save(){
 	}
 }
 add_action('admin_init', 'em_options_save');
+
+/**
+ * Runs wp_kses on string or recursviely into array.
+ * @param array|string $string
+ *
+ * @return mixed
+ */
+function em_options_save_kses_deep( $string ) {
+	if( is_array($string) ) {
+		foreach ( $string as $k => $v ) {
+			$string[$k] = em_options_save_kses_deep( $v );
+		}
+	} else {
+		$string = wp_kses_post( $string );
+	}
+	return $string;
+}
 
 function em_admin_email_test_ajax(){
     if( wp_verify_nonce($_REQUEST['_check_email_nonce'],'check_email') && current_user_can('activate_plugins') ){
@@ -549,7 +570,7 @@ function em_admin_options_page() {
 			
 			<?php /*
 			<div  class="postbox " >
-			<div class="handlediv"><br /></div><h3><span><?php _e ( 'Debug Modes', 'events-manager'); ?> </span></h3>
+			<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Debug Modes', 'events-manager'); ?> </span></h3>
 			<div class="inside">
 				<table class='form-table'>
 					<?php
@@ -583,7 +604,7 @@ function em_admin_option_box_image_sizes(){
 	global $save_button;
 	?>
 	<div  class="postbox " id="em-opt-image-sizes" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Image Sizes', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Image Sizes', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 	    <p class="em-boxheader"><?php _e('These settings will only apply to the image uploading if using our front-end forms. In your WP admin area, images are handled by WordPress.','events-manager'); ?></p>
 		<table class='form-table'>
@@ -609,7 +630,7 @@ function em_admin_option_box_email(){
 	$current_user = get_user_by('id', get_current_user_id());
 	?>
 	<div  class="postbox "  id="em-opt-email-settings">
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Email Settings', 'events-manager'); ?></span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Email Settings', 'events-manager'); ?></span></h3>
 	<div class="inside em-email-form">
 		<p class="em-email-settings-check em-boxheader">
 			<em><?php _e('Before you save your changes, you can quickly send yourself a test email by clicking this button.','events-manager'); ?>
@@ -684,7 +705,7 @@ function em_admin_option_box_caps(){
 	global $save_button, $wpdb;
 	?>
 	<div  class="postbox" id="em-opt-user-caps" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'User Capabilities', 'events-manager'); ?></span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'User Capabilities', 'events-manager'); ?></span></h3>
 	<div class="inside">
             <table class="form-table">
             <tr><td colspan="2" class="em-boxheader">
@@ -764,7 +785,7 @@ function em_admin_option_box_caps(){
 	            				<td class="<?php echo ( !is_int($odd/2) ) ? 'odd':''; ?>">
 									<?php foreach($capability_group as $cap => $cap_help){ ?>
 	            					<input type="checkbox" name="em_capabilities[<?php echo $role->name; ?>][<?php echo $cap ?>]" value="1" id="<?php echo $role->name.'_'.$cap; ?>" <?php echo $role->has_cap($cap) ? 'checked="checked"':''; ?> />
-	            					&nbsp;<label for="<?php echo $role->name.'_'.$cap; ?>"><?php echo $cap; ?></label>&nbsp;<a href="#">?</a>
+	            					&nbsp;<label for="<?php echo $role->name.'_'.$cap; ?>"><?php echo $cap; ?></label>&nbsp;<a href="#" title="<?php echo $cap_help; ?>">?</a>
 	            					<br />
 	            					<?php } ?>
 	            				</td>
@@ -807,7 +828,7 @@ function em_admin_option_box_uninstall(){
 	$options_data = get_option('dbem_data');  
 	?>
 	<div  class="postbox" id="em-opt-admin-tools" >
-		<div class="handlediv"><br /></div><h3><span><?php _e ( 'Admin Tools', 'events-manager'); ?> (<?php _e ( 'Advanced', 'events-manager'); ?>)</span></h3>
+		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Admin Tools', 'events-manager'); ?> (<?php _e ( 'Advanced', 'events-manager'); ?>)</span></h3>
 		<div class="inside">
 			
 			<?php
@@ -995,7 +1016,7 @@ function em_admin_option_box_data_privacy(){
 	);
 	?>
     <div  class="postbox " id="em-opt-data-privacy" >
-        <div class="handlediv"><br /></div><h3><span><?php _e ( 'Privacy', 'events-manager'); ?> </span></h3>
+        <div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Privacy', 'events-manager'); ?> </span></h3>
         <div class="inside">
             <p class="em-boxheader"><?php echo sprintf(__('Depending on the nature of your site, you will be subject to one or more national and international privacy/data protection laws such as the %s. Below are some options that you can use to tailor how Events Manager interacts with WordPress privacy tools.','events-manager'), '<a href=http://ec.europa.eu/justice/smedataprotect/index_en.htm">GDPR</a>'); ?></p>
             <p class="em-boxheader"><?php echo sprintf(__('For more information see our <a href="%s">data privacy documentation</a>.','events-manager'), 'http://wp-events-plugin.com/documentation/data-privacy-gdpr-compliance/'); ?></p>

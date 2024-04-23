@@ -1044,7 +1044,7 @@ class EM_Location extends EM_Object {
 				case '#_EDITLOCATIONLINK':
 				    if( $this->can_manage('edit_locations','edit_others_locations') ){
 						$link = esc_url($this->get_edit_url());
-						$replace = ($result == '#_LOCATIONEDITURL' || $result == '#_EDITLOCATIONURL' ) ? $link : '<a href="'.$link.'">'.esc_html(sprintf(__('Edit Location','events-manager'))).'</a>';
+						$replace = ($result == '#_LOCATIONEDITURL' || $result == '#_EDITLOCATIONURL' ) ? $link : '<a href="'.$link.'" title="'.esc_attr($this->location_name).'">'.esc_html(sprintf(__('Edit Location','events-manager'))).'</a>';
 				    }
 					break;
 				case '#_LOCATIONICALURL':

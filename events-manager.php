@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name:    Events Manager (ICTU WP corrections)
-Version: 9999.8
+Plugin Name:    Events Manager (ICTU WP corrections: 7.0.0 == 6.4.7.3)
+Version: 7.0.0
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -10,7 +10,7 @@ Text Domain: events-manager
 */
 
 /*
-Copyright (c) 2023, Marcus Sykes
+Copyright (c) 2024, Marcus Sykes
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // Setting constants
-define('EM_VERSION', '9999.8'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_VERSION', '7.0.0'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
 define('EM_PRO_MIN_VERSION', '3.0'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.0'); //self expanatory
 define('EM_DIR', dirname( __FILE__ )); //an absolute path to this directory
@@ -65,95 +65,97 @@ function dbem_debug_mode(){
 
 // INCLUDES
 //Base classes
-include('classes/em-exception.php');
-include('classes/em-options.php');
-include('classes/em-object.php');
-include('classes/em-datetimezone.php');
-include('classes/em-datetime.php');
-include('classes/em-taxonomy-term.php');
-include('classes/em-taxonomy-terms.php');
-include('classes/em-taxonomy-frontend.php');
+include( EM_DIR . '/classes/em-exception.php' );
+include( EM_DIR . '/classes/em-options.php' );
+include( EM_DIR . '/classes/em-object.php' );
+include( EM_DIR . '/classes/em-datetimezone.php' );
+include( EM_DIR . '/classes/em-datetime.php' );
+include( EM_DIR . '/classes/em-taxonomy-term.php' );
+include( EM_DIR . '/classes/em-taxonomy-terms.php' );
+include( EM_DIR . '/classes/em-taxonomy-frontend.php' );
 //set up events as posts
-include("em-posts.php");
+include( EM_DIR . '/em-posts.php' );
 //Template Tags & Template Logic
-include("em-actions.php");
-include("em-events.php");
-include("em-emails.php");
-include("em-functions.php");
-include("em-ical.php");
-include("em-shortcode.php");
-include("em-template-tags.php");
-include("em-data-privacy.php");
-include("multilingual/em-ml.php");
+include( EM_DIR . '/em-actions.php' );
+include( EM_DIR . '/em-events.php' );
+include( EM_DIR . '/em-emails.php' );
+include( EM_DIR . '/em-functions.php' );
+include( EM_DIR . '/em-ical.php' );
+include( EM_DIR . '/em-shortcode.php' );
+include( EM_DIR . '/em-template-tags.php' );
+include( EM_DIR . '/em-data-privacy.php' );
+include( EM_DIR . '/multilingual/em-ml.php' );
 //Widgets
-include("widgets/em-events.php");
+include( EM_DIR . '/widgets/em-events.php' );
 if( get_option('dbem_locations_enabled') ){
-	include("widgets/em-locations.php");
+	include( EM_DIR . '/widgets/em-locations.php' );
 }
-include("widgets/em-calendar.php");
+include( EM_DIR . '/widgets/em-calendar.php' );
 //Classes
-include('classes/em-list-table.php');
-include('classes/em-booking.php');
-include('classes/em-bookings.php');
-include("classes/em-bookings-table.php") ;
-include('classes/em-calendar.php');
-include('classes/em-category.php');
-include('classes/em-categories.php');
-include('classes/em-categories-frontend.php');
-include('classes/em-event.php');
-include('classes/event-locations/em-event-locations.php');
-include('classes/em-event-post.php');
-include('classes/em-events.php');
-include('classes/em-location.php');
-include('classes/em-location-post.php');
-include('classes/em-locations.php');
-include("classes/em-mailer.php") ;
-include('classes/em-notices.php');
-include('classes/em-people.php');
-include('classes/em-person.php');
-include('classes/em-permalinks.php');
-include('classes/em-tag.php');
-include('classes/em-tags.php');
-include('classes/em-tags-frontend.php');
-include('classes/em-ticket-booking.php');
-include('classes/em-ticket.php');
-include('classes/em-tickets-bookings.php');
-include('classes/em-ticket-bookings.php');
-include('classes/em-tickets.php');
+include( EM_DIR . '/classes/em-list-table.php' );
+include( EM_DIR . '/classes/em-booking.php' );
+include( EM_DIR . '/classes/em-bookings.php' );
+include( EM_DIR . '/classes/em-bookings-table.php' );
+include( EM_DIR . '/classes/em-calendar.php' );
+include( EM_DIR . '/classes/em-category.php' );
+include( EM_DIR . '/classes/em-categories.php' );
+include( EM_DIR . '/classes/em-categories-frontend.php' );
+include( EM_DIR . '/classes/em-event.php' );
+include( EM_DIR . '/classes/event-locations/em-event-locations.php' );
+include( EM_DIR . '/classes/em-event-post.php' );
+include( EM_DIR . '/classes/em-events.php' );
+include( EM_DIR . '/classes/em-location.php' );
+include( EM_DIR . '/classes/em-location-post.php' );
+include( EM_DIR . '/classes/em-locations.php' );
+include( EM_DIR . '/classes/em-mailer.php' );
+include( EM_DIR . '/classes/em-notices.php' );
+include( EM_DIR . '/classes/em-people.php' );
+include( EM_DIR . '/classes/em-person.php' );
+include( EM_DIR . '/classes/em-permalinks.php' );
+include( EM_DIR . '/classes/em-tag.php' );
+include( EM_DIR . '/classes/em-tags.php' );
+include( EM_DIR . '/classes/em-tags-frontend.php' );
+include( EM_DIR . '/classes/em-ticket-booking.php' );
+include( EM_DIR . '/classes/em-ticket.php' );
+include( EM_DIR . '/classes/em-tickets-bookings.php' );
+include( EM_DIR . '/classes/em-ticket-bookings.php' );
+include( EM_DIR . '/classes/em-tickets.php' );
+
 //Admin Files
 if( is_admin() ){
-	include('classes/em-admin-notices.php');
-	include('admin/em-admin.php');
-	include('admin/em-bookings.php');
-	include('admin/dashboard.php');
-	include('admin/em-docs.php');
-	include('admin/em-help.php');
-	include('admin/em-options.php');
-	include('admin/em-data-privacy.php');
+	include( EM_DIR . '/classes/em-admin-notices.php' );
+	include( EM_DIR . '/admin/em-admin.php' );
+	include( EM_DIR . '/admin/em-admin-modals.php' );
+	include( EM_DIR . '/admin/em-bookings.php' );
+	include( EM_DIR . '/admin/dashboard.php' );
+	include( EM_DIR . '/admin/em-docs.php' );
+	include( EM_DIR . '/admin/em-help.php' );
+	include( EM_DIR . '/admin/em-options.php' );
+	include( EM_DIR . '/admin/em-data-privacy.php' );
 	if( is_multisite() ){
-		include('admin/em-ms-options.php');
+		include( EM_DIR . '/admin/em-ms-options.php' );
 	}
 	//post/taxonomy controllers
-	include('classes/em-event-post-admin.php');
-	include('classes/em-event-posts-admin.php');
-	include('classes/em-location-post-admin.php');
-	include('classes/em-location-posts-admin.php');
-	include('classes/em-taxonomy-admin.php');
-	include('classes/em-categories-admin.php');
-	include('classes/em-tags-admin.php');
+	include( EM_DIR . '/classes/em-event-post-admin.php' );
+	include( EM_DIR . '/classes/em-event-posts-admin.php' );
+	include( EM_DIR . '/classes/em-location-post-admin.php' );
+	include( EM_DIR . '/classes/em-location-posts-admin.php' );
+	include( EM_DIR . '/classes/em-taxonomy-admin.php' );
+	include( EM_DIR . '/classes/em-categories-admin.php' );
+	include( EM_DIR . '/classes/em-tags-admin.php' );
 	//bookings folder
-		include('admin/bookings/em-cancelled.php');
-		include('admin/bookings/em-confirmed.php');
-		include('admin/bookings/em-events.php');
-		include('admin/bookings/em-rejected.php');
-		include('admin/bookings/em-pending.php');
-		include('admin/bookings/em-person.php');
+		include( EM_DIR . '/admin/bookings/em-cancelled.php' );
+		include( EM_DIR . '/admin/bookings/em-confirmed.php' );
+		include( EM_DIR . '/admin/bookings/em-events.php' );
+		include( EM_DIR . '/admin/bookings/em-rejected.php' );
+		include( EM_DIR . '/admin/bookings/em-pending.php' );
+		include( EM_DIR . '/admin/bookings/em-person.php' );
 }
 
 /* Only load the component if BuddyPress is loaded and initialized. */
 function bp_em_init() {
 	if ( version_compare( BP_VERSION, '1.3', '>' ) ){
-		require( dirname( __FILE__ ) . '/buddypress/bp-em-core.php' );
+		require( EM_DIR . '/buddypress/bp-em-core.php' );
 	}
 }
 add_action( 'bp_include', 'bp_em_init' );
@@ -432,13 +434,32 @@ class EM_Scripts_and_Styles {
 			'calendar' => array(
 				'breakpoints' => array( 'small' => 560, 'medium' => 908, 'large' => false, ), // reorder this array for efficiency if you override it, so smallest is first, largest or false is last
 			),
+			'phone' => false,
 			'datepicker' => array(
 				'format' => get_option('dbem_datepicker_format', 'Y-m-d'),
 			),
 			'search' => array(
 				'breakpoints' => array( 'small' => 650, 'medium' => 850, 'full' => false, ) // reorder this array for efficiency if you override it, so smallest is first, largest or false is last
-			)
+			),
+			'url' => plugins_url('', __FILE__),
 		);
+		// add phone number validation and localization - BETA - add EM_PHONE_INTL_ENABLED constant set to true in wp-config.php to enable
+		if( defined('EM_PHONE_INTL_ENABLED') && EM_PHONE_INTL_ENABLED ) {
+			$em_localized_js['phone'] = array(
+				'error' => __('Please enter a valid phone number.', 'events-manager'),
+				'detectJS' => get_option('dbem_phone_detect') == true,
+				//'initialCountry' => 'US',
+				'options' => array(
+					'initialCountry' => get_option('dbem_phone_default_country', 'US'),
+					'nationalMode' => get_option('dbem_phone_national_format') == true,
+					'showDialCode' => get_option('dbem_phone_show_selected_code') == true,
+					'showFlags' => get_option('dbem_phone_show_flags') == true,
+					'onlyCountries' => get_option('dbem_phone_countries_include'),
+					'excludeCountries' => get_option('dbem_phone_countries_exclude'),
+					'preferredCountries' => get_option('dbem_phone_countries_preferred'),
+				),
+			);
+		}
 		// localize flatpickr
 		if( static::$localize_flatpickr ){
 			$em_localized_js['datepicker']['locale'] = static::$locale;
@@ -474,6 +495,7 @@ class EM_Scripts_and_Styles {
 							'processing' => get_option('dbem_bookings_submit_button_processing'),
 						),
 					),
+					'update_listener' => implode( ',', apply_filters('em_booking_form_js_fields_change_match', array() )), // if anything here matches a field in the booking form, em_booking_form_updated JS Event will be triggered
 				),
 				//booking button
 				'bb_full' =>  get_option('dbem_booking_button_msg_full'),
@@ -599,15 +621,15 @@ function em_plugins_loaded(){
 	//WPFC Integration
 	if( defined('WPFC_VERSION') ){
 		function load_em_wpfc_plugin(){
-			if( !function_exists('wpfc_em_init') ) include('em-wpfc.php');
+			if( !function_exists('wpfc_em_init') ) include( EM_DIR . '/em-wpfc.php' );
 		}
 		add_action('init', 'load_em_wpfc_plugin', 200);
 	}
 	//bbPress
-	if( class_exists( 'bbPress' ) ) include('em-bbpress.php');
+	if( class_exists( 'bbPress' ) ) include( EM_DIR . '/em-bbpress.php' );
 	// other integrations
 	if( class_exists('\Thrive\Automator\Admin') ){
-		include('integrations/thrive-automator/events-manager-thrive-automator.php');
+		include( EM_DIR . '/integrations/thrive-automator/events-manager-thrive-automator.php' );
 	}
 }
 add_filter('plugins_loaded','em_plugins_loaded');
@@ -998,7 +1020,7 @@ class EM_Formats {
 	protected static $formats_filter = 'em_formats_filter';
 
 	public static function init(){
-		add_action( 'template_redirect', 'EM_Formats::add_filters');
+		add_action( 'events_manager_loaded', 'EM_Formats::add_filters');
 	}
 	public static function add_filters( $get_all = false ){
 		//you can hook into this filter and activate the format options you want to override by supplying the wp option names in an array, just like in the database.
@@ -1251,13 +1273,13 @@ register_deactivation_hook( __FILE__,'em_deactivate');
  */
 function em_check_pro_compatability(){
 	if( defined('EMP_VERSION') && EMP_VERSION < EM_PRO_MIN_VERSION_CRITICAL && (!defined('EMP_DISABLE_CRITICAL_WARNINGS') || !EMP_DISABLE_CRITICAL_WARNINGS) ){
-		include('em-pro-compatibility.php');
+		include( EM_DIR . '/em-pro-compatibility.php' );
 	}
 }
 add_action('plugins_loaded','em_check_pro_compatability', 1);
 
 $v6 = EM_Options::get('v6', null);
 if( $v6 !== null ){
-	include('v6-migrate.php');
+	include( EM_DIR . '/v6-migrate.php' );
 }
 ?>
