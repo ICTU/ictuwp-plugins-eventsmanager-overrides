@@ -57,7 +57,7 @@ class OAuth_API_Admin_Settings {
 		$service_name = $api::get_service_name();
 		?>
 		<div  class="postbox em-oaut-connect em-oauth-connect-<?php echo esc_attr($api::get_authorization_scope()); ?>" id="em-opt-<?php echo esc_attr($api::get_option_name()); ?>-app" >
-			<div class="handlediv"><br /></div><h3><span><?php echo esc_html($api::get_service_name()) ?></span></h3>
+			<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo esc_html($api::get_service_name()) ?></span></h3>
 			<div class="inside">
 				<?php static::em_settings_apps_header(); ?>
 				<h4><?php esc_html_e('Server API Credentials', 'events-manager-zoom'); ?></h4>

@@ -14,7 +14,7 @@
 	$current_text = $current_status ? '<span class="status enabled">('. $enabled_text .')</span>' : '<span class="status disabled">('.$disabled_text.')</span>';
 	?>
 	<div  class="postbox em-postbox-notice em-postbox-notice-info" id="em-opt-advanced-formatting" data-enabled-text="(<?php echo esc_attr($enabled_text); ?>)" data-disabled-text="(<?php echo esc_attr($disabled_text); ?>)">
-		<div class="handlediv"><br /></div><h3><span><?php _e ( 'Advanced Mode', 'events-manager'); ?> <?php echo $current_text ?></span></h3>
+		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Advanced Mode', 'events-manager'); ?> <?php echo $current_text ?></span></h3>
 		<div class="inside">
 			<input type="hidden" name="dbem_advanced_formatting" id="em-advanced-formatting" value="<?php echo $current_status; ?>">
 			<div>
@@ -62,7 +62,7 @@
 	</div>
 
 	<div  class="postbox " id="em-opt-events-formats" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Events', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Events', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
 		 	<tr class="em-header"><td colspan="2">
@@ -182,12 +182,27 @@
 	</div> <!-- .postbox -->
 
 	<div  class="postbox " id="em-opt-search-form" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Search Form', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Search Form', 'events-manager'); ?> </span></h3>
 	<div class="inside">
+		<?php
+			// common text
+			global $em_localized_js;
+			$breakpoints = $em_localized_js['search']['breakpoints'];
+			$screen_desc = esc_html__('When the size of the %s is less than %s, this field can be hidden on the main search form to save viewing space. You can still enable this field to show in advanced search settings.', 'events-manager');
+			$hide_size_desc_medium = sprintf($screen_desc, __('Search Form','events-manager'), $breakpoints['medium'].'px');
+			$hide_size_desc_small = sprintf($screen_desc, __('Search Form','events-manager'), $breakpoints['small'].'px');
+		?>
 		<table class="form-table em-search-form-main">
 		    <tr class="em-header"><td colspan="2"><h4><?php _e('Main Search Fields','events-manager'); ?></h4></td></tr>
 			<?php
 			em_options_radio_binary ( __( 'Show main search bar?', 'events-manager'), 'dbem_search_form_main', __('Choose whether to display the main search bar. If disabled, advanced search fields will be shown in \'Inline\' mode automatically. You must also choose to enable at least one advanced search field, to avoid having an emtpy search form.','events-manager'), '', '.em-search-form-main-option, .em-search-form-advanced-hidden' );
+			$responsive_options = array(
+				'one-line' => esc_html__('One Line', 'events-manager'),
+				'multi-line' => esc_html__('Multi Line', 'events-manager'),
+			);
+			$screen_desc = esc_html__('When the size of the %s is less than %s, the search fields and buttons in the main bar can either remain on one line and resize accordingly, or break into multiple lines. If you want to keep all your search terms options, multiple lines will look better as they will look squashed on smaller screens and provide a worse search exprience. You can also hide individual search fields in settings further down to reduce screen clutter as the search from shrinks.', 'events-manager');
+			$responsive_desc_medium = sprintf($screen_desc, __('Search Form','events-manager'), $breakpoints['medium'].'px');
+			em_options_select( __( 'Responsive Behaviour', 'events-manager'), 'dbem_search_form_responsive', $responsive_options, $responsive_desc_medium );
 			?>
 			<tbody class="em-subsection em-search-form-main-option">
 				<tr class="em-subheader"><td colspan="2"><h4><?php _e('Views','events-manager'); ?></h4></td></tr>
@@ -216,29 +231,41 @@
 					</td>
 				</tr>
 			</tbody>
+			<tbody class="em-subsection em-search-form-main-option">
+			<tr class="em-subheader"><td colspan="2"><h5><?php esc_html_e( 'Sorting', 'events-manager'); ?></h5></td></tr>
+			<?php
+				em_options_radio_binary ( __( 'Show sorting icon?', 'events-manager'), 'dbem_search_form_sorting', __('Show the sorting icon to change the ordering of search results.', 'events-manager') );
+			?>
+			</tbody>
 		    <tbody class="em-subsection em-search-form-main-option">
 				<tr class="em-subheader"><td colspan="2"><h5><?php esc_html_e( 'Search', 'events-manager'); ?></h5></td></tr>
 				<?php
-				em_options_radio_binary ( __( 'Show text search?', 'events-manager'), 'dbem_search_form_text', '', '', '#dbem_search_form_text_label_row' );
+				em_options_radio_binary ( __( 'Show text search?', 'events-manager'), 'dbem_search_form_text', '', '', '#dbem_search_form_text_label_row, #dbem_search_form_text_hide_m_row, #dbem_search_form_text_hide_s_row' );
 				em_options_input_text ( __( 'Label', 'events-manager'), 'dbem_search_form_text_label', __('Appears within the input box.','events-manager') );
+				em_options_radio_binary ( sprintf(__( 'Hide on %s screen size?', 'events-manager'), __( 'small', 'events-manager')), 'dbem_search_form_text_hide_s', $hide_size_desc_small );
+				em_options_radio_binary ( sprintf(__( 'Hide on %s screen size?', 'events-manager'), __( 'medium', 'events-manager')), 'dbem_search_form_text_hide_m', $hide_size_desc_medium);
 				?>
 			</tbody>
 			<tbody class="em-subsection em-search-form-main-option em-settings-geocoding" id="em-search-form-geo">
 				<tr class="em-subheader"><td colspan="2"><h5><?php esc_html_e( 'Geolocation Search', 'events-manager'); ?></h5></td></tr>
 				<?php
-				em_options_radio_binary ( __( 'Show geolocation search?', 'events-manager'), 'dbem_search_form_geo', '', '', '#dbem_search_form_geo_label_row, #dbem_search_form_geo_distance_default_row, #dbem_search_form_geo_unit_default_row' );
+				em_options_radio_binary ( __( 'Show geolocation search?', 'events-manager'), 'dbem_search_form_geo', '', '', '#dbem_search_form_geo_label_row, #dbem_search_form_geo_distance_default_row, #dbem_search_form_geo_unit_default_row, #dbem_search_form_geo_hide_m_row, #dbem_search_form_geo_hide_s_row' );
 				em_options_input_text ( __( 'Label', 'events-manager'), 'dbem_search_form_geo_label', __('Appears within the input box.','events-manager') );
 				em_options_input_text ( __( 'Default distance', 'events-manager'), 'dbem_search_form_geo_distance_default', __('Enter a number.','events-manager'), '');
 				em_options_select ( __( 'Default distance unit', 'events-manager'), 'dbem_search_form_geo_unit_default', array('km'=>'km','mi'=>'mi'), '');
+				em_options_radio_binary ( sprintf(__( 'Hide on %s screen size?', 'events-manager'), __( 'small', 'events-manager')), 'dbem_search_form_geo_hide_s', $hide_size_desc_small );
+				em_options_radio_binary ( sprintf(__( 'Hide on %s screen size?', 'events-manager'), __( 'medium', 'events-manager')), 'dbem_search_form_geo_hide_m', $hide_size_desc_medium );
 				?>
 			</tbody>
 			<tbody class="em-subsection em-search-form-main-option em-settings-dates" id="em-search-form-dates">
 				<tr class="em-subheader"><td colspan="2"><h5><?php esc_html_e( 'Dates', 'events-manager'); ?></h5></td></tr>
 				<?php
-				em_options_radio_binary ( __( 'Show date range?', 'events-manager'), 'dbem_search_form_dates', '', '', '#dbem_search_form_dates_label_row, #dbem_search_form_dates_separator_row, #dbem_search_form_dates_format_row' );
+				em_options_radio_binary ( __( 'Show date range?', 'events-manager'), 'dbem_search_form_dates', '', '', '#dbem_search_form_dates_label_row, #dbem_search_form_dates_separator_row, #dbem_search_form_dates_format_row, #dbem_search_form_dates_hide_m_row, #dbem_search_form_dates_hide_s_row' );
 				em_options_input_text ( __( 'Label', 'events-manager'), 'dbem_search_form_dates_label', __('Appears as the label for this search option.','events-manager') );
 				em_options_input_text ( __( 'Date Separator', 'events-manager'), 'dbem_search_form_dates_separator', sprintf(__( 'For when start/end %s are present, this will separate the two (include spaces here if necessary).', 'events-manager'), __('dates','events-manager')) );
 				em_options_input_text ( __( 'Date Picker Format', 'events-manager'), 'dbem_search_form_dates_format', __('Customize the format of the selected search dates, we recommend a brief format to keep things short.', 'events-manager'). ' '. sprintf(__( 'This uses a slightly different format to the others on here, for a list of characters to use, visit the <a href="%s">reference page</a>', 'events-manager'),'https://flatpickr.js.org/formatting/#date-formatting-tokens') );
+				em_options_radio_binary ( sprintf(__( 'Hide on %s screen size?', 'events-manager'), __( 'small', 'events-manager')), 'dbem_search_form_dates_hide_s', $hide_size_desc_small );
+				em_options_radio_binary ( sprintf(__( 'Hide on %s screen size?', 'events-manager'), __( 'medium', 'events-manager')), 'dbem_search_form_dates_hide_m', $hide_size_desc_medium );
 				?>
 			</tbody>
 		</table>
@@ -250,17 +277,24 @@
 			<tbody class="em-search-form-advanced">
 				<?php
 				em_options_input_text ( __( 'Search button text', 'events-manager'), 'dbem_search_form_submit', __("If there's no fields to show in the main search section, this button will be used instead at the bottom of the advanced fields.",'events-manager'));
+				em_options_select ( __( 'Advanced search style', 'events-manager'), 'dbem_search_form_advanced_style', array('accordion'=> __('Accordion', 'events-manager'),'headings'=> __('Headings', 'events-manager')), __('The advanced search can be styled in a section-based format, with expandable sections, or directly inline with static headings. If you want headings for some sections and not others, choose Headings and leave specific section heading labels blank in settings further down.','events-manager'), '');
+
 				$triggers = array('inline' => '#dbem_search_form_advanced_hidden_row, #dbem_search_form_advanced_hide_row');
 				em_options_select ( __( 'Advanced search mode', 'events-manager'), 'dbem_search_form_advanced_mode', array('inline'=> __('Inline', 'events-manager'),'modal'=> __('Modal', 'events-manager')), __('You can choose to show a popup modal or inline under the main search bar triggered by an icon on the main search bar.','events-manager'), '', $triggers);
 				?>
 			</tbody>
 			<tbody class="em-search-form-advanced em-search-form-advanced-hidden">
 				<?php
-				em_options_radio_binary ( __( 'Hidden by default?', 'events-manager'), 'dbem_search_form_advanced_hidden', __('If set to yes, advanced search fields will be hidden by default and can be revealed by clicking the "Advanced Search" link.','events-manager') );
-				em_options_input_text ( __( 'Show label', 'events-manager'), 'dbem_search_form_advanced_show', __('The tip text that is shown for the advanced search trigger.','events-manager') );
-				em_options_input_text ( __( 'Hide label', 'events-manager'), 'dbem_search_form_advanced_hide', __('The tip text that is shown for the advanced search trigger.','events-manager') );
+				em_options_radio_binary ( __( 'Hidden by default?', 'events-manager'), 'dbem_search_form_advanced_hidden', __('If set to yes, advanced search fields will be hidden by default and can be revealed by clicking the "Advanced Search" icon.','events-manager'), '', '#dbem_search_form_advanced_trigger_row', true );
+				em_options_radio_binary ( __( 'Show hide/show trigger?', 'events-manager'), 'dbem_search_form_advanced_trigger', __('If set to yes, advanced search fields can toggled by clicking the "Advanced Search" icon.','events-manager'), '', '.em-search-form-advanced-trigger' );
 				?>
 			</tbody>
+            <tbody class="em-search-form-advanced em-search-form-advanced-trigger em-search-form-advanced-hidden">
+                <?php
+                em_options_input_text ( __( 'Show label', 'events-manager'), 'dbem_search_form_advanced_show', __('The tip text that is shown for the advanced search trigger.','events-manager') );
+                em_options_input_text ( __( 'Hide label', 'events-manager'), 'dbem_search_form_advanced_hide', __('The tip text that is shown for the advanced search trigger.','events-manager') );
+                ?>
+            </tbody>
 			<tbody class="em-search-form-advanced em-subsection">
 				<tr class="em-subheader"><td colspan="2"><h5><?php esc_html_e( 'Search', 'events-manager'); ?></h5></td></tr>
 				<?php
@@ -348,7 +382,7 @@
 	</div> <!-- .postbox -->
 
 	<div  class="postbox " id="em-opt-date-time" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Date/Time', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Date/Time', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 		<p class="em-boxheader"><?php
 			$date_time_format_tip = sprintf(__('Date and Time formats follow the <a href="%s">WordPress time formatting conventions</a>', 'events-manager'), 'http://codex.wordpress.org/Formatting_Date_and_Time');
@@ -373,7 +407,7 @@
 	</div> <!-- .postbox -->
 	      
    	<div  class="postbox " id="em-opt-calendar-formats" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Calendar', 'events-manager'); ?></span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Calendar', 'events-manager'); ?></span></h3>
 	<div class="inside">
     	<table class="form-table">
     		<?php
@@ -478,7 +512,7 @@
 	
 	<?php if( get_option('dbem_locations_enabled') ): ?>
 	<div  class="postbox " id="em-opt-locations-formats" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Locations', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Locations', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
 		    <tr class="em-header"><td colspan="2"><h4><?php echo sprintf(__('%s Page','events-manager'),__('Locations','events-manager')); ?></h4></td></tr>
@@ -591,7 +625,7 @@
 	
 	<?php if( get_option('dbem_categories_enabled') && !(EM_MS_GLOBAL && !is_main_site()) ): ?>
 	<div  class="postbox " id="em-opt-categories-formats" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Event Categories', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Event Categories', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
     		<?php
@@ -667,7 +701,7 @@
 	
 	<?php if( get_option('dbem_tags_enabled') ): ?>
 	<div  class="postbox " id="em-opt-tags-formats" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Event Tags', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Event Tags', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
     		<?php
@@ -740,7 +774,7 @@
 	<?php endif; ?>
 	
 	<div  class="postbox " id="em-opt-rss-formats" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'RSS', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'RSS', 'events-manager'); ?> </span></h3>
 	<div class="inside">
     	<table class="form-table">
 			<?php				
@@ -802,7 +836,7 @@
 	</div> <!-- .postbox -->
 	
 	<div  class="postbox " id="em-opt-maps-formats" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Maps', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Maps', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 		<p class="em-boxheader"><?php echo sprintf(__('You can use Google Maps to show where your events are located. For more information on using maps, <a href="%s">see our documentation</a>.','events-manager'),'http://wp-events-plugin.com/documentation/google-maps/'); ?>
 		<table class='form-table'>

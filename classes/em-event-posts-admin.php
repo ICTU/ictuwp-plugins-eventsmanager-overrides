@@ -160,9 +160,15 @@ class EM_Event_Posts_Admin{
 			}
             if( !empty($_REQUEST['author']) ){
             	?>
-            	<input type="hidden" name="author" value="<?php echo esc_attr($_REQUEST['author']); ?>" />
+            	<input type="hidden" name="author" value="<?php echo esc_attr($_REQUEST['author']); ?>" >
             	<?php            	
             }
+			// overwrite post status search if using custom stati
+			if( !empty($_REQUEST['post_status']) && ($_REQUEST['post_status'] === 'past' || $_REQUEST['post_status'] === 'future') ){
+				?>
+				<input type="hidden" name="post_status" value="all" >
+				<?php
+			}
 		}
 	}
 	
@@ -235,7 +241,7 @@ class EM_Event_Posts_Admin{
 				}else{
 					echo get_option('dbem_event_all_day_message');
 				}
-				if( $EM_Event->get_timezone()->getName() != EM_DateTimeZone::create()->getName() ) echo '<span class="dashicons dashicons-info" style="font-size:16px; color:#ccc; padding-top:2px;"></span>';
+				if( $EM_Event->get_timezone()->getName() != EM_DateTimeZone::create()->getName() ) echo '<span class="dashicons dashicons-info" style="font-size:16px; color:#ccc; padding-top:2px;" title="'.esc_attr(str_replace('_', ' ', $EM_Event->event_timezone)).'"></span>';
 				break;
 			case 'extra':
 				if( get_option('dbem_rsvp_enabled') == 1 && !empty($EM_Event->event_rsvp) && $EM_Event->can_manage('manage_bookings','manage_others_bookings')){
@@ -276,7 +282,7 @@ class EM_Event_Posts_Admin{
 		if($post->post_type == EM_POST_TYPE_EVENT){
 			global $post, $EM_Event;
 			$EM_Event = em_get_event($post, 'post_id');
-			$actions['duplicate'] = '<a href="'.$EM_Event->duplicate_url().'">'.__('Duplicate','events-manager').'</a>';
+			$actions['duplicate'] = '<a href="'.$EM_Event->duplicate_url().'" title="'.sprintf(__('Duplicate %s','events-manager'), __('Event','events-manager')).'">'.__('Duplicate','events-manager').'</a>';
 		}
 		return $actions;
 	}
@@ -413,7 +419,7 @@ class EM_Event_Recurring_Posts_Admin{
 		if($post->post_type == 'event-recurring'){
 			global $post, $EM_Event;
 			$EM_Event = em_get_event($post, 'post_id');
-			$actions['duplicate'] = '<a href="'.$EM_Event->duplicate_url().'">'.__('Duplicate','events-manager').'</a>';
+			$actions['duplicate'] = '<a href="'.$EM_Event->duplicate_url().'" title="'.sprintf(__('Duplicate %s','events-manager'), __('Event','events-manager')).'">'.__('Duplicate','events-manager').'</a>';
 		}
 		return $actions;
 	}

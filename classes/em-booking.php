@@ -43,6 +43,7 @@ class EM_Booking extends EM_Object{
 	var $booking_spaces;
 	var $booking_comment;
 	public $booking_status = false;
+	public $booking_rsvp_status = null;
 	var $booking_tax_rate = null;
 	var $booking_taxes = null;
 	var $booking_meta = array();
@@ -55,9 +56,22 @@ class EM_Booking extends EM_Object{
 		'booking_spaces' => array('name'=>'spaces','type'=>'%d'),
 		'booking_comment' => array('name'=>'comment','type'=>'%s'),
 		'booking_status' => array('name'=>'status','type'=>'%d'),
+		'booking_rsvp_status' => array('name'=>'rsvp_status','type'=>'%d','null'=>1),
 		'booking_tax_rate' => array('name'=>'tax_rate','type'=>'%f','null'=>1),
 		'booking_taxes' => array('name'=>'taxes','type'=>'%f','null'=>1),
 		'booking_meta' => array('name'=>'meta','type'=>'%s')
+	);
+	public static $field_shortcuts = array(
+		'id' => 'booking_id',
+		'uuid' => 'booking_uuid',
+		'price' => 'booking_price',
+		'spaces' => 'booking_spaces',
+		'comment' => 'booking_comment',
+		'status' => 'booking_status',
+		'rsvp_status' => 'booking_rsvp_status',
+		'tax_rate' => 'booking_tax_rate',
+		'taxes' => 'booking_taxes',
+		'meta' => 'booking_meta'
 	);
 	//Other Vars
 	/**
@@ -102,6 +116,7 @@ class EM_Booking extends EM_Object{
 	 * @var int
 	 */
 	var $previous_status = false;
+	var $previous_rsvp_status;
 	/**
 	 * The booking approval status number corresponds to a state in this array.
 	 * @var array
@@ -124,6 +139,8 @@ class EM_Booking extends EM_Object{
 	 * @var EM_Tickets_Bookings
 	 */
 	var $manage_override;
+	
+	static $rsvp_statuses = array();
 	
 	/**
 	 * Creates booking object and retrieves booking data (default is a blank booking object). Accepts either array of booking data (from db) or a booking id.
@@ -155,6 +172,7 @@ class EM_Booking extends EM_Object{
 		    }
 			//Save into the object
 			$this->to_object($booking);
+			$this->booking_status = absint($this->booking_status);
 			$this->previous_status = $this->booking_status;
 			$this->booking_date = !empty($booking['booking_date']) ? $booking['booking_date']:false;
 		    if( empty($this->booking_uuid) ) {
@@ -164,6 +182,8 @@ class EM_Booking extends EM_Object{
 				    $this->booking_uuid = $this->generate_uuid();
 			    }
 		    }
+			// format status of rsvp into an int
+		    $this->booking_rsvp_status = $this->booking_rsvp_status === '' || $this->booking_rsvp_status === null ? null : absint($this->booking_rsvp_status);
 		}else{
 		    $this->booking_uuid = $this->generate_uuid();
 	    }
@@ -213,9 +233,16 @@ class EM_Booking extends EM_Object{
 			if( $this->date() !== false ) $this->date()->setTimestamp($val);
 		}elseif( $prop == 'language' ){
 			$this->booking_meta['lang'] = $val;
-		}else{
-			$this->$prop = $val;
+		}elseif( $prop == 'person' ){
+			// prevent non EM_Person objects from being set
+			if( $val instanceof EM_Person ) {
+				$this->person_id = $val->ID;
+				$this->person = $val;
+			} else {
+				$this->person = null;
+			}
 		}
+		parent::__set( $prop, $val );
 	}
 	
 	public function __isset( $prop ){
@@ -310,10 +337,15 @@ class EM_Booking extends EM_Object{
 				$meta_insert = array();
 				foreach( $this->booking_meta as $meta_key => $meta_value ){
 					if( is_array($meta_value) ){
+						$associative = array_keys($meta_value) !== range(0, count($meta_value) - 1);
 						// we go down one level of array
 						foreach( $meta_value as $kk => $vv ){
 							if( is_array($vv) ) $vv = serialize($vv);
-							$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->booking_id, '_'.$meta_key.'_'.$kk, $vv);
+							if( $associative ) {
+								$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->booking_id, '_'.$meta_key.'|'.$kk, $vv);
+							}else{
+								$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->booking_id, '_'.$meta_key.'|', $vv);
+							}
 						}
 					}else{
 						$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->booking_id, $meta_key, $meta_value);
@@ -380,9 +412,13 @@ class EM_Booking extends EM_Object{
 		if( is_array($meta_value) ){
 			// delete split array values by getting the generated keys as we would further down and deleting them first
 			$meta_delete_keys = array();
-			foreach( $meta_value as $kk => $vv ){
-				$meta_delete_keys[] = "'". $wpdb->_real_escape('_'.$meta_key.'_'.$kk) . "'";
+			// associative arrays are deleted by key
+			foreach( $meta_value as $kk => $vv ) {
+				$meta_delete_keys[] = "'" . $wpdb->_real_escape( '_' . $meta_key . '|' . $kk ) . "'";
+				$meta_delete_keys[] = "'" . $wpdb->_real_escape( '_' . $meta_key . '_' . $kk ) . "'"; // legacy delete, probably can never delete this
 			}
+			// sequential arrays are stored with same key value so only one delete key needed - we can't do an if( array_keys($meta_value) !== range(0, count($meta_value) - 1) ) { check because legacy strings with sequentials store the number in the key
+			$meta_delete_keys[] = "'". $wpdb->_real_escape('_'.$meta_key.'|') . "'";
 			// delete previous values so we insert new ones
 			$result = $wpdb->query( $wpdb->prepare('DELETE FROM '. EM_BOOKINGS_META_TABLE .' WHERE booking_id=%d AND meta_key IN ('. implode(',', $meta_delete_keys) .')', $this->booking_id) );
 		}else{
@@ -391,13 +427,16 @@ class EM_Booking extends EM_Object{
 		// if null, then we already deleted it and skip this
 		if( $meta_value !== null ) {
 			if( is_array($meta_value) ){
+				$associative = array_keys($meta_value) !== range(0, count($meta_value) - 1);
 				// we go down one level of array
-				$meta_insert = array();
 				foreach( $meta_value as $kk => $vv ){
 					if( is_array($vv) ) $vv = serialize($vv);
-					$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->booking_id, '_'.$meta_key.'_'.$kk, $vv);
+					if( $associative ) {
+						$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->booking_id, '_'.$meta_key.'|'.$kk, $vv);
+					}else{
+						$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->booking_id, '_'.$meta_key.'|', $vv);
+					}
 				}
-				// delete previous values so we insert new ones
 				$result = $wpdb->query('INSERT INTO '. EM_BOOKINGS_META_TABLE .' (booking_id, meta_key, meta_value) VALUES '. implode(',', $meta_insert));
 			}else{
 				$result = $wpdb->insert( EM_BOOKINGS_META_TABLE, array('booking_id' => $this->booking_id, 'meta_key' => $meta_key, 'meta_value' => $meta_value));
@@ -1029,12 +1068,14 @@ class EM_Booking extends EM_Object{
 		global $wpdb;
 		$result = false;
 		if( $this->can_manage('manage_bookings','manage_others_bookings') ){
+			$this->tickets_bookings = null; // reload tickets
+			$this->get_tickets_bookings(); // get this before bookings deleted from DB
 			$sql = $wpdb->prepare("DELETE FROM ". EM_BOOKINGS_TABLE . " WHERE booking_id=%d", $this->booking_id);
 			$result = $wpdb->query( $sql );
 			if( $result !== false ){
 				//delete the tickets too
 				$this->get_tickets_bookings()->delete();
-				$this->previous_status = $this->booking_status;
+				$this->previous_status = $this->booking_meta['previous_status'] = $this->booking_status;
 				$this->booking_status = false;
 				$this->feedback_message = sprintf(__('%s deleted', 'events-manager'), __('Booking','events-manager'));
 				$wpdb->delete( EM_META_TABLE, array('meta_key'=>'booking-note', 'object_id' => $this->booking_id), array('%s','%d'));
@@ -1099,6 +1140,25 @@ class EM_Booking extends EM_Object{
 		return $this->set_status(0, $email, false, $email_args);
 	}
 	
+	function uncancel( $email = true, $email_args = array() ) {
+		if ( $this->can_uncancel() ) {
+			// get status to uncancel to
+			if ( isset($this->booking_meta['previous_status']) ) {
+				$status = $this->booking_meta['previous_status'];
+				if( $status == 2 ){ // we shouldn't reject an uncancelled booking!
+					$status = 0;
+				}
+			} elseif ( defined('EM_BOOKINGS_UNCANCEL_STATUS') ) {
+				$status = EM_BOOKINGS_UNCANCEL_STATUS;
+			} else {
+				$status = 0;
+			}
+			return $this->set_status( $status, $email, false, $email_args );
+		} else {
+			return false;
+		}
+	}
+	
 	/**
 	 * Change the status of the booking. This will save to the Database too. 
 	 * @param int $status
@@ -1109,9 +1169,6 @@ class EM_Booking extends EM_Object{
 	 */
 	function set_status($status, $email = true, $ignore_spaces = false ){
 		global $wpdb;
-		$func_args = func_get_args();
-		$email_args = !empty($func_args[3]) ? $func_args[3] : array();
-		$email_args = array_merge( array('email_admin'=> true, 'force_resend' => false, 'email_attendee' => true), $email_args );
 		$action_string = strtolower($this->status_array[$status]);
 		//if we're approving we can't approve a booking if spaces are full, so check before it's approved.
 		if(!$ignore_spaces && $status == 1){
@@ -1122,14 +1179,18 @@ class EM_Booking extends EM_Object{
 			}
 		}
 		$this->previous_status = $this->booking_status;
-		$this->booking_status = $status;
+		$this->booking_status = absint($status);
 		$result = $wpdb->query($wpdb->prepare('UPDATE '.EM_BOOKINGS_TABLE.' SET booking_status=%d WHERE booking_id=%d', array($status, $this->booking_id)));
 		if($result !== false){
+			$this->update_meta('previous_status', $this->previous_status);
 			$this->feedback_message = sprintf(__('Booking %s.','events-manager'), $action_string);
 			$result = apply_filters('em_booking_set_status', $result, $this); // run the filter before emails go out, in case others need to hook in first
 			if( $result && $this->previous_status != $this->booking_status ){ //email if status has changed
 				do_action('em_booking_status_changed', $this, array('status' => $status, 'email' => $email, 'ignore_spaces' => $ignore_spaces)); // method params passed as array
 				if( $email ){
+					$func_args = func_get_args();
+					$email_args = !empty($func_args[3]) ? $func_args[3] : array();
+					$email_args = array_merge( array('email_admin'=> true, 'force_resend' => false, 'email_attendee' => true), $email_args );
 					if( $this->email( !empty($email_args['email_admin']), !empty($email_args['force_resend']), !empty($email_args['email_attendee'])) ){
 					    if( $this->mails_sent > 0 ){
 					        $this->feedback_message .= " ".__('Email Sent.','events-manager');
@@ -1151,7 +1212,7 @@ class EM_Booking extends EM_Object{
 	}
 	
 	public function can_cancel(){
-		if( get_option('dbem_bookings_user_cancellation') ){
+		if( get_option('dbem_bookings_user_cancellation') && !in_array($this->booking_status, array(2,3)) ){
 			$cancellation_time = get_option('dbem_bookings_user_cancellation_time');
 			$can_cancel = $this->get_event()->start()->getTimestamp() > time(); // previously default was rsvp end
 			if( !empty($cancellation_time) && $cancellation_time > 0 ){
@@ -1167,8 +1228,17 @@ class EM_Booking extends EM_Object{
 		return apply_filters('em_booking_can_cancel', $can_cancel, $this);
 	}
 	
+	/*
+	 * Bookings that are made since
+	 */
+	public function can_uncancel() {
+		$has_previous_status = isset( $this->booking_meta['previous_status'] ) || defined('EM_BOOKINGS_UNCANCEL_STATUS');
+		$can_uncancel = get_option('dbem_bookings_user_uncancellation') && $this->validate() && $has_previous_status;
+		return apply_filters('em_booking_can_uncancel', $can_uncancel, $this);
+	}
+	
 	public static function is_dateinterval_string( $string ){
-		return preg_match('/^\-?P(([0-9]+[YMDW])+)?(T(([0-9]+[YMDW])+))?/', $string);
+		return preg_match('/^\-?P(([0-9]+[YMDW])+)?(T(([0-9]+[HMS])+))?$/', $string);
 	}
 	
 	/**
@@ -1200,6 +1270,179 @@ class EM_Booking extends EM_Object{
 	function is_pending(){
 		$result = ($this->is_reserved() || $this->booking_status == 0) && $this->booking_status != 1;
 	    return apply_filters('em_booking_is_pending', $result, $this);
+	}
+	
+	/**
+	 * Set RSVP status to given number. Null sets booking to unconfirmed.
+	 *
+	 * @param null|int $status
+	 * @param array $args
+	 *
+	 * @return bool
+	 */
+	function set_rsvp_status( $status, $args = array() ) {
+		global $wpdb;
+		// get status strings
+		$action_string = static::get_rsvp_statuses( $status )->label;
+		//if we're approving we can't approve a booking if spaces are full, so check before it's approved.
+		$this->previous_rsvp_status = $this->booking_rsvp_status;
+		$this->booking_rsvp_status = ( $status !== null && $status <= 2  && $status >= 0 ) ? absint($status) : null;
+		if ( $this->booking_rsvp_status === null ) {
+			$result = $wpdb->query($wpdb->prepare('UPDATE '.EM_BOOKINGS_TABLE.' SET booking_rsvp_status=NULL WHERE booking_id=%d', array($this->booking_id)));
+		} else {
+			$result = $wpdb->query($wpdb->prepare('UPDATE '.EM_BOOKINGS_TABLE.' SET booking_rsvp_status=%d WHERE booking_id=%d', array($this->booking_rsvp_status, $this->booking_id)));
+		}
+		if ( $result !== false ) {
+			$this->feedback_message = esc_html__( sprintf(__("Booking RSVP status set to '%s'.",'events-manager'), $action_string) );
+			$result = apply_filters('em_booking_set_rsvp_status', true, $this);
+			if( $result && $this->previous_rsvp_status != $this->booking_rsvp_status ){ // act on booking status if there's a change in rsvp
+				do_action('em_booking_rsvp_status_changed', $this, $status, $args); // method params passed as array
+				if( $this->booking_rsvp_status === 0  && get_option('dbem_bookings_rsvp_sync_cancel') ) {
+					$this->cancel();
+				} elseif ( $this->booking_rsvp_status === 1 && get_option('dbem_bookings_rsvp_sync_confirm') ) {
+					$this->set_status(1);
+				} elseif( $this->previous_rsvp_status === 0 && $this->can_uncancel() ) {
+					$this->uncancel();
+				}
+			}
+			$this->feedback_message = static::get_rsvp_statuses($status)->confirmation;
+		} else {
+			//errors should be logged by save()
+			$this->feedback_message = sprintf(__('Booking could not be %s.','events-manager'), $action_string);
+			$this->add_error(sprintf(__('Booking could not be %s.','events-manager'), $action_string));
+			$result =  apply_filters('em_booking_set_rsvp_status', false, $this, $args);
+		}
+		return $result;
+	}
+	
+	/**
+	 * Get RSVP Status equivalents
+	 * @param $text
+	 * @param $status
+	 *
+	 * @return int|string|null
+	 */
+	function get_rsvp_status( $text = false ) {
+		if( $text ) {
+			$status = static::get_rsvp_statuses( $this->booking_rsvp_status );
+			return apply_filters('em_booking_get_rsvp_status_text', $status->label, $this, array('text' => $text, 'status' => $status));
+		}
+		return apply_filters('em_booking_get_rsvp_status', $this->booking_rsvp_status, $this);
+	}
+	
+	/**
+	 * Sets the RSVP status of a booking to 'Maybe' (status 2), not to be confused with the actual status of the booking.
+	 * @param $args
+	 *
+	 * @return bool
+	 */
+	public function can_change_rsvp() {
+		$can_change = false;
+		$changeable_statuses = apply_filters( 'em_booking_statuses_rsvp_changeable', array(0,1,3), $this );
+		if ( get_option('dbem_bookings_rsvp_can_change') && in_array( $this->booking_status, $changeable_statuses) ) {
+			if ( $this->booking_status == 3 && $this->can_uncancel()  ) {
+				$can_change = true;
+			} else {
+				$can_change = true;
+			}
+		}
+		return apply_filters( 'can_change_rsvp', $can_change, $this );
+	}
+	
+	/**
+	 * Returns true or false if user can RSVP a certain status, null if the current status is already the one requested.
+	 * @param int|null $status
+	 *
+	 * @return mixed|null
+	 */
+	public function can_rsvp( $status ) {
+		$result = false;
+		if( get_option( 'dbem_bookings_rsvp' ) ) {
+			// check if we're changing the RSVP or doing anew with a specific status
+			if ( $this->booking_rsvp_status !== null && $this->can_change_rsvp() ) {
+				$can_rsvp = true;
+			} else {
+				$rsvpable_booking_statuses = apply_filters( 'em_booking_rsvpable_booking_statuses', array( 0, 1 ) );
+				if ( $this->booking_status === 3 && get_option( 'dbem_bookings_rsvp_sync_cancel' ) && $this->can_uncancel() ) {
+					$rsvpable_booking_statuses[] = 3;
+				}
+				$can_rsvp = in_array( $this->booking_status, $rsvpable_booking_statuses );
+			}
+			// general RSVP possible, now go deeper
+			if ( $can_rsvp ) {
+				if ( $status === null ) { // unconfirm
+					$result = $this->can_manage(); // we cannot unconfirm unless an admin
+				} elseif ( $status === 0 ) { // cancel
+					if ( get_option( 'dbem_bookings_rsvp_sync_cancel' ) && $this->booking_rsvp_status !== $status ) {
+						$result = $this->can_cancel();
+					} else {
+						$result = true;
+					}
+				} elseif ( $status === 1 ) { // confirm
+					$result = true;
+				} elseif ( $status === 2 ) { // maybe
+					if ( get_option( 'dbem_bookings_rsvp_maybe' ) ) {
+						$result = true;
+					}
+				}
+				if( $result ){
+					$result = $this->booking_rsvp_status === $status ? null : true;
+				}
+			}
+		}
+		return apply_filters('em_booking_can_rsvp', $result, $this, $status );
+	}
+	
+	public static function get_rsvp_statuses( $status = false ) {
+		
+		if( empty(static::$rsvp_statuses) ) {
+			$statuses = array(
+				null => array(
+					'label' => __('Unconfirmed', 'events-manager'),
+					'label_action' => __('Unconfirm', 'events-manager'),
+					'action' => 'unconfirm',
+					'confirmation' => __('Your booking is now unconfirmed', 'events-manager'),
+				),
+				0 => array(
+					'label' => __('Not Attending', 'events-manager'),
+					'label_action' => sprintf( __('RSVP - %s', 'events-manager'), __('No') ),
+					'label_answer' => __('No'),
+					'confirmation' => __('You have declined your attendance.', 'events-manager'),
+					'action' => 'decline',
+				),
+				1 => array(
+					'label' => __('Attending', 'events-manager'),
+					'label_action' => sprintf( __('RSVP - %s', 'events-manager'), __('Yes') ),
+					'label_answer' => __('Yes'),
+					'action' => 'confirm',
+					'confirmation' => __('You have confirmed your attendance.', 'events-manager'),
+				),
+			);
+			
+			if( get_option('dbem_bookings_rsvp_sync_cancel') ) {
+				$statuses[0] = array_merge( $statuses[0], array(
+					'confirmation' => __('You have declined your attendance, your booking is now cancelled.', 'events-manager'),
+				));
+			}
+			if( get_option('dbem_bookings_rsvp_maybe') ) {
+				$statuses[2] = array(
+					'label' => __('Maybe Attending', 'events-manager'),
+					'label_action' => sprintf( __('RSVP - %s', 'events-manager'), __('Maybe', 'events-manager') ),
+					'label_answer' => __('Maybe', 'events-manager'),
+					'action' => 'maybe',
+					'confirmation' => __('You have not definitively confrimed your attendance.', 'events-manager'),
+				);
+			}
+			
+			$statuses = apply_filters( 'em_booking_get_rsvp_statuses', $statuses );
+			foreach( $statuses as $k => $s ) $statuses[$k] = (object) $s;
+			static::$rsvp_statuses = $statuses;
+		}
+		
+		if ( $status !== false ) {
+			return !empty(static::$rsvp_statuses[$status]) ? static::$rsvp_statuses[$status] : static::$rsvp_statuses[null];
+		}
+		return static::$rsvp_statuses;
 	}
 	
 	/**
@@ -1240,9 +1483,21 @@ class EM_Booking extends EM_Object{
 			preg_match_all('/\{([a-zA-Z0-9_\-,]+)\}(.+?)\{\/\1\}/s', $output_string, $conditionals);
 			if( count($conditionals[0]) > 0 ){
 				//Check if the language we want exists, if not we take the first language there
-				foreach($conditionals[1] as $key => $condition){
+				foreach ($conditionals[1] as $key => $condition) {
 					$show_condition = apply_filters('em_booking_output_show_condition', false, array('format' => $format, 'target' => $target, 'condition' => $condition, 'conditionals' => $conditionals, 'key' => $key), $this );
-					// run conditionals, but don't erase unrecognized replacements, leave that to EM_Event->output()
+					if ($condition == 'has_rsvp_reply') { //check if there's an rsvp
+						$show_condition = $this->booking_rsvp_status !== null;
+					} elseif ( $condition == 'no_rsvp_reply' ) { //check if there's no rsvp
+						$show_condition = $this->booking_rsvp_status === null;
+					} elseif ( $condition == 'is_rsvp_reply_no' ) { //check if there's no rsvp
+						$show_condition = $this->booking_rsvp_status === 0;
+					} elseif ( $condition == 'is_rsvp_reply_yes' ) { //check if there's no rsvp
+						$show_condition = $this->booking_rsvp_status === 1;
+					} elseif ( $condition == 'is_rsvp_reply_maybe' ) { //check if there's no rsvp
+						$show_condition = $this->booking_rsvp_status === 2;
+					} elseif ( preg_match('/^is_rsvp_reply_([0-9]+)$/', $condition, $matches ) ) { //check if there's no rsvp
+						$show_condition = $this->booking_rsvp_status == $matches[1];
+					}
 					if( $show_condition ){
 						//calculate lengths to delete placeholders
 						$placeholder_length = strlen($condition)+2;
@@ -1341,6 +1596,14 @@ class EM_Booking extends EM_Object{
 					}else{
 						$replace = $bookings_link;
 					}
+					break;
+				case '#_BOOKINGSTATUS':
+				case '#_BOOKING_STATUS':
+					$replace = $this->get_status();
+					break;
+				case '#_BOOKINGRSVPSTATUS':
+				case '#_BOOKING_RSVP_STATUS':
+					$replace = $this->get_rsvp_status( true );
 					break;
 				default:
 					$replace = $this->output_placeholder( $full_result, $placeholder_atts, $format, $target );
@@ -1634,6 +1897,41 @@ class EM_Booking extends EM_Object{
 			$booking['person']['phone'] = $this->get_person()->phone;
 		}
 		return apply_filters('em_booking_to_api', $booking, array(), $this);
+	}
+	
+	/**
+	 * Used to process values from meta table bookings_meta. Other meta table values are processed in EM_Object.
+	 *
+	 * Processing the meta for bookings is slightly different for backwards compatibility reasons. This is because of how we split subkeys version 6.4.5.1 and below, which was with an underscore. The problem with underscores is that keys can contain underscores and we don't know where to make the split.
+	 * For bookings, we consider the first word until an underscore as a key, and the rest would be considered subkeys of an array.
+	 * Future versions of EM will split keys with a pipe so there's no confusion, and compatibility is taken into account here.
+	 *
+	 * @param array $raw_meta
+	 * @return array
+	 */
+	function process_meta( $raw_meta ){
+		$processed_meta = array();
+		foreach( $raw_meta as $meta ){
+			$meta_value = maybe_unserialize($meta['meta_value']);
+			$meta_key = $meta['meta_key'];
+			if( preg_match('/^_([a-zA-Z\-0-9 _]+)\|([a-zA-Z\-0-9 _]+)?$/', $meta_key, $match) || preg_match('/^_([a-zA-Z\-0-9]+)_([a-zA-Z\-0-9 _]+)$/', $meta_key, $match) ){
+				$key = $match[1];
+				if( empty($processed_meta[$key]) ) $processed_meta[$key] = array();
+				$subkey = isset($match[2]) ? $match[2] : count($processed_meta[$key]); // allows for storing arrays without a key, such as _beverage_choice| can be stored multiple times in a row if key is not relevant
+				if( !empty($processed_meta[$key][$subkey]) && preg_match('/\|$/', $meta_key) ){
+					// we create an array unsequenced array without pre-deined keys, provided the key name ends with a pipe
+					if( !is_array($processed_meta[$key][$subkey]) ) {
+						$processed_meta[$key][$subkey] = array($processed_meta[$key][$subkey]);
+					}
+					$processed_meta[$key][$subkey][] = $meta_value;
+				}else{
+					$processed_meta[$key][$subkey] = $meta_value;
+				}
+			}else{
+				$processed_meta[$meta_key] = $meta_value;
+			}
+		}
+		return $processed_meta;
 	}
 }
 ?>

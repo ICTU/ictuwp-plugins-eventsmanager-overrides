@@ -219,15 +219,15 @@ class EM_Event_Post {
 					$thelist .= "\n\t<li>";
 					switch ( strtolower( $parents ) ) {
 						case 'multiple':
-							$thelist .= '<a href="' . $category->get_url() . '" ' . $rel . '>' . $category->name.'</a></li>';
+							$thelist .= '<a href="' . $category->get_url() . '" title="' . esc_attr( sprintf( __( "View all posts in %s", 'events-manager'), $category->name ) ) . '" ' . $rel . '>' . $category->name.'</a></li>';
 							break;
 						case 'single':
-							$thelist .= '<a href="' . $category->get_url() . '" ' . $rel . '>';
+							$thelist .= '<a href="' . $category->get_url() . '" title="' . esc_attr( sprintf( __( "View all posts in %s", 'events-manager'), $category->name ) ) . '" ' . $rel . '>';
 							$thelist .= $category->name.'</a></li>';
 							break;
 						case '':
 						default:
-							$thelist .= '<a href="' . $category->get_url() . '" ' . $rel . '>' . $category->name.'</a></li>';
+							$thelist .= '<a href="' . $category->get_url() . '" title="' . esc_attr( sprintf( __( "View all posts in %s", 'events-manager'), $category->name ) ) . '" ' . $rel . '>' . $category->name.'</a></li>';
 					}
 				}
 				$thelist .= '</ul>';
@@ -238,15 +238,15 @@ class EM_Event_Post {
 						$thelist .= $separator;
 					switch ( strtolower( $parents ) ) {
 						case 'multiple':
-							$thelist .= '<a href="' . $category->get_url() . '" ' . $rel . '>' . $category->name.'</a>';
+							$thelist .= '<a href="' . $category->get_url() . '" title="' . esc_attr( sprintf( __( "View all posts in %s", 'events-manager'), $category->name ) ) . '" ' . $rel . '>' . $category->name.'</a>';
 							break;
 						case 'single':
-							$thelist .= '<a href="' . $category->get_url() . '" ' . $rel . '>';
+							$thelist .= '<a href="' . $category->get_url() . '" title="' . esc_attr( sprintf( __( "View all posts in %s", 'events-manager'), $category->name ) ) . '" ' . $rel . '>';
 							$thelist .= "$category->name</a>";
 							break;
 						case '':
 						default:
-							$thelist .= '<a href="' . $category->get_url() . '" ' . $rel . '>' . $category->name.'</a>';
+							$thelist .= '<a href="' . $category->get_url() . '" title="' . esc_attr( sprintf( __( "View all posts in %s", 'events-manager'), $category->name ) ) . '" ' . $rel . '>' . $category->name.'</a>';
 					}
 					++$i;
 				}
@@ -265,6 +265,10 @@ class EM_Event_Post {
 		        $term = get_term_by('id', $wp_query->query_vars[EM_TAXONOMY_CATEGORY], EM_TAXONOMY_CATEGORY);
 		        $wp_query->query_vars[EM_TAXONOMY_CATEGORY] = ( $term !== false && !is_wp_error($term) )? $term->slug:0;
 		    }
+			// if we have a fake future status, make sure we don't actually look for this status
+			if ( !empty($_REQUEST['post_status']) && $_REQUEST['post_status'] === 'future' ) {
+				$wp_query->query_vars['post_status'] = 'any';
+			}
 		}
 		//Scoping
 		if( !empty($wp_query->query_vars['post_type']) && ($wp_query->query_vars['post_type'] == EM_POST_TYPE_EVENT || $wp_query->query_vars['post_type'] == 'event-recurring') && (empty($wp_query->query_vars['post_status']) || !in_array($wp_query->query_vars['post_status'],array('trash','pending','draft'))) ) {

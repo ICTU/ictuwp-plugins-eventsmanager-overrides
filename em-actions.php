@@ -257,6 +257,7 @@ function em_init_actions_start() {
 				", $term); // 'label' is now for backwards compatibility
 				$results = $wpdb->get_results($sql);
 			}
+			$results = apply_filters('em_actions_locations_search_results', $results);
 			echo EM_Object::json_encode($results);
 			die();
 		}
@@ -273,7 +274,7 @@ function em_init_actions_start() {
 	
 	//Booking Actions
 	$booking_allowed_actions = array('bookings_approve'=>'approve','bookings_reject'=>'reject','bookings_unapprove'=>'unapprove', 'bookings_delete'=>'delete');
-	$booking_ajax_actions = array('booking_add', 'booking_add_one', 'booking_cancel', 'booking_save', 'booking_set_status', 'booking_resend_email', 'booking_modify_person', 'bookings_add_note', 'booking_form_summary');
+	$booking_ajax_actions = array('booking_add', 'booking_add_one', 'booking_cancel', 'booking_save', 'booking_set_status', 'booking_resend_email', 'booking_modify_person', 'bookings_add_note', 'booking_form_summary', 'booking_rsvp_change', 'booking_set_rsvp_status');
 	$booking_nopriv_actions = array('booking_add', 'booking_form_summary');
 	$booking_actions = array_merge( $booking_ajax_actions, array_keys($booking_allowed_actions) );
 	if( !empty($_REQUEST['action']) && in_array($_REQUEST['action'], $booking_actions) && (is_user_logged_in() || (in_array($_REQUEST['action'], $booking_nopriv_actions) && get_option('dbem_bookings_anonymous'))) ){
@@ -404,8 +405,36 @@ function em_init_actions_start() {
 				$EM_Notices->add_error( __('You must log in to cancel your booking.', 'events-manager') );
 			}
 		//TODO user action shouldn't check permission, booking object should.
-	  	}elseif( array_key_exists($_REQUEST['action'], $booking_allowed_actions) && $EM_Event->can_manage('manage_bookings','manage_others_bookings') ){
+		}elseif ( $_REQUEST['action'] == 'booking_rsvp_change' && isset($_REQUEST['status']) ) {
+			// Change RSVP status
+			em_verify_nonce('booking_rsvp');
+			$status = absint($_REQUEST['status']);
+			if( $EM_Booking->can_manage() || $EM_Booking->person->ID == get_current_user_id() ){
+				if( $EM_Booking->can_rsvp( $status ) ) {
+					if ( $EM_Booking->set_rsvp_status( $status ) ) {
+						$result = true;
+						if ( !defined( 'DOING_AJAX' ) ) {
+							$EM_Notices->add_confirm( $EM_Booking->feedback_message, true );
+							wp_safe_redirect( $_SERVER['HTTP_REFERER'] );
+							exit();
+						}
+					} else {
+						$result = false;
+						$EM_Notices->add_error( $EM_Booking->get_errors() );
+						$feedback = $EM_Booking->feedback_message;
+					}
+				} else {
+					$rsvp_status = EM_Booking::get_rsvp_statuses( $status );
+					$feedback = sprintf( esc_html__('You cannot RSVP to this booking with %s', 'events-manager'), "'" . $rsvp_status->label_action . "'");
+					$EM_Notices->add_error($feedback);
+				}
+			}else{
+				$EM_Notices->add_error( __('You must log in to cancel your booking.', 'events-manager') );
+			}
+			//TODO user action shouldn't check permission, booking object should.
+		}elseif( array_key_exists($_REQUEST['action'], $booking_allowed_actions) && $EM_Event->can_manage('manage_bookings','manage_others_bookings') ){
 	  		//Event Admin only actions
+			em_verify_nonce($_REQUEST['action'], 'nonce');
 			$action = $booking_allowed_actions[$_REQUEST['action']];
 			//Just do it here, since we may be deleting bookings of different events.
 			if( !empty($_REQUEST['bookings']) && EM_Object::array_is_numeric($_REQUEST['bookings'])){
@@ -477,6 +506,21 @@ function em_init_actions_start() {
 					$EM_Notices->add_error( $EM_Booking->get_errors() );
 					$feedback = $EM_Booking->feedback_message;
 				}	
+			}
+		}elseif( $_REQUEST['action'] == 'booking_set_rsvp_status' ){
+			em_verify_nonce('booking_set_rsvp_status_'.$EM_Booking->booking_id);
+			$status = $_REQUEST['booking_rsvp_status'] === '' ? null : absint($_REQUEST['booking_rsvp_status']);
+			if( $EM_Booking->can_manage('manage_bookings','manage_others_bookings') && $status !== $EM_Booking->booking_rsvp_status ){
+				$result = $EM_Booking->set_rsvp_status($status, false, true);
+				if ( $result ){
+					$EM_Notices->add_confirm( $EM_Booking->feedback_message, true );
+					$redirect = !empty($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : em_wp_get_referer();
+					wp_safe_redirect( $redirect );
+					exit();
+				}else{
+					$EM_Notices->add_error( $EM_Booking->get_errors() );
+					$feedback = $EM_Booking->feedback_message;
+				}
 			}
 		}elseif( $_REQUEST['action'] == 'booking_resend_email' ){
 			em_verify_nonce('booking_resend_email_'.$EM_Booking->booking_id);
@@ -763,6 +807,9 @@ function em_ajax_bookings_table(){
 	}else{
 		check_admin_referer('em_bookings_table');
 		$EM_Bookings_Table = new EM_Bookings_Table();
+		if( !empty($_REQUEST['table_id']) ) { // so modals work linked to the ID
+			$EM_Bookings_Table->uid = $EM_Bookings_Table->id . '-' . absint($_REQUEST['table_id']);
+		}
 		$EM_Bookings_Table->output_table();
 	}
 	exit();
@@ -800,6 +847,28 @@ function em_ajax_search_and_pagination(){
 		$view = !empty($_REQUEST['view']) && preg_match('/^[a-zA-Z0-9-_]+$/', $_REQUEST['view']) ? $_REQUEST['view'] : 'list';
 		$args['scope'] = get_option('dbem_events_page_scope');
 		$args = EM_Events::get_post_search($args);
+        if( get_option('dbem_search_form_cookies', true) ) {
+	        if ( empty( $_REQUEST['clear_search'] ) ) {
+		        // clear known unecesssary and empty keys
+		        $cookie_args = array();
+		        $known_args  = array( 'action', 'view_id', 'view', 'ajax', 'owner', 'pagination' );
+		        foreach ( $args as $k => $v ) {
+			        if ( !in_array( $k, $known_args ) && ! empty( $v ) ) {
+				        $cookie_args[ $k ] = $v;
+			        }
+		        }
+                // deal with scope in case empty
+                if ( !empty($cookie_args['scope']) && !empty($_REQUEST['scope']) && is_array($_REQUEST['scope']) && empty($_REQUEST['scope'][0]) && empty($_REQUEST['scope'][1]) ) {
+                    unset($cookie_args['scope']);
+                }
+	        }
+            if( !empty($cookie_args) ) {
+                setcookie( 'em_search_events', base64_encode( json_encode( $args ) ), time() + MONTH_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+	        } else {
+		        setcookie( 'em_search_events', null, time() - 30, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+                unset($_COOKIE['em_search_events']);
+	        }
+        }
 		$search_args = em_get_search_form_defaults($args);
 		$args = array_merge($search_args, $args);
 		$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
@@ -831,6 +900,15 @@ function em_ajax_search_and_pagination(){
 			// legacy
 			$args['scope'] = get_option('dbem_events_page_scope');
 			$args = EM_Events::get_post_search($args);
+            // set cookies if relevant
+			if( get_option('dbem_search_form_cookies', true) ) {
+				if ( empty( $_REQUEST['clear_search'] ) ) {
+					setcookie( 'em_search_events', base64_encode( json_encode( $args ) ), time() + MONTH_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+				} else {
+					setcookie( 'em_search_events', null, time() - 30, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+				}
+			}
+            // set limit and output template
 			$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
 			em_locate_template('templates/events-list-grouped.php', true, array('args' => $args)); //if successful, this template overrides the settings and defaults, including search
 		}elseif( $_REQUEST['action'] == 'search_tags' && defined('DOING_AJAX') ){

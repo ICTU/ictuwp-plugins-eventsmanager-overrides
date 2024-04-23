@@ -74,14 +74,14 @@ foreach( EM_Event_Locations\Event_Locations::get_types() as $event_location_type
 						$selected = ($selected_location == $EM_Location->location_id) ? "selected='selected' " : '';
 						if( $selected ) $found_location = true;
 				        ?>
-				        <option value="<?php echo esc_attr($EM_Location->location_id) ?>" <?php echo $selected ?>><?php echo esc_html($EM_Location->location_name); ?></option>
+				        <option value="<?php echo esc_attr($EM_Location->location_id) ?>" title="<?php echo esc_attr("{$EM_Location->location_latitude},{$EM_Location->location_longitude}"); ?>" <?php echo $selected ?>><?php echo esc_html($EM_Location->location_name); ?></option>
 				        <?php
 					}
 					if( empty($found_location) && !empty($EM_Event->location_id) ){
 						$EM_Location = $EM_Event->get_location();
 						if( $EM_Location->post_id ){
 							?>
-					        <option value="<?php echo esc_attr($EM_Location->location_id) ?>" selected="selected"><?php echo esc_html($EM_Location->location_name); ?></option>
+					        <option value="<?php echo esc_attr($EM_Location->location_id) ?>" title="<?php echo esc_attr("{$EM_Location->location_latitude},{$EM_Location->location_longitude}"); ?>" selected="selected"><?php echo esc_html($EM_Location->location_name); ?></option>
 					        <?php
 						}
 					}

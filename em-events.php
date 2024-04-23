@@ -54,6 +54,9 @@ function em_content($page_content) {
 						//Intercept search request, if defined
 						if( !empty($_REQUEST['action']) && ($_REQUEST['action'] == 'search_events' || $_REQUEST['action'] == 'search_events_grouped') ){
 							$args = EM_Events::get_post_search( array_merge($args, $_REQUEST) );
+						} elseif( !empty($_COOKIE['em_search_events']) ) {
+							$cookie_args = json_decode(base64_decode($_COOKIE['em_search_events']), true);
+							$args = array_merge($args, $cookie_args);
 						}
 						$args['id'] = 1; // for easier reference in customizations
 						if( empty($args['scope']) ){
@@ -120,7 +123,7 @@ function em_content($page_content) {
 			}
 			//Now, we either replace CONTENTS or just replace the whole page
 			if( preg_match('/CONTENTS/', $page_content) ){
-				$content = preg_replace( '/CONTENTS/', $page_content, $content );
+				$content = str_replace('CONTENTS',$content,$page_content);
 			}
 			if(get_option('dbem_credits')){
 				$content .= '<p style="color:#999; font-size:11px;">Powered by <a href="https://wp-events-plugin.com" style="color:#999;" target="_blank">Events Manager</a></p>';

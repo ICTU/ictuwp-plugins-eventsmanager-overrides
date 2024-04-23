@@ -92,7 +92,7 @@
 							</div>
 						</td>
 						<td>
-							<a href="<?php echo $url ?>edit/?action=event_duplicate&amp;event_id=<?php echo $EM_Event->event_id ?>">
+							<a href="<?php echo $url ?>edit/?action=event_duplicate&amp;event_id=<?php echo $EM_Event->event_id ?>" title="<?php _e ( 'Duplicate this event', 'events-manager'); ?>">
 								<strong>+</strong>
 							</a>
 						</td>

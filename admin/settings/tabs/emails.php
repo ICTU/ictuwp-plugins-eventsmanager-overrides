@@ -6,7 +6,7 @@
 
 	<?php if( get_option('dbem_rsvp_enabled') ): ?>
 	<div  class="postbox "  id="em-opt-booking-emails">
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Booking Email Templates', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Booking Email Templates', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 	    <?php do_action('em_options_page_booking_email_templates_options_top'); ?>
 		<table class='form-table'>
@@ -101,7 +101,7 @@
 			  		
 	<?php if( get_option('dbem_rsvp_enabled') ): ?>
 	<div  class="postbox "  id="em-opt-registration-emails">
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Registration Email Templates', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Registration Email Templates', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 		<p class="em-boxheader">
 			<?php echo sprintf(__('This is only applicable when %s is not active.','events-manager'), '<em>'.__('No-User Booking Mode','events-manager').'</em>'); ?>
@@ -121,7 +121,7 @@
 	<?php endif; ?>
 	
 	<div  class="postbox " id="em-opt-event-submission-emails" >
-	<div class="handlediv"><br /></div><h3><span><?php _e ( 'Event Submission Templates', 'events-manager'); ?> </span></h3>
+	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Event Submission Templates', 'events-manager'); ?> </span></h3>
 	<div class="inside">
 		<table class='form-table'>
 			<tr class="em-header"><td colspan='2'><h4><?php _e('Event Admin Emails', 'events-manager'); ?></h4></td></tr>
@@ -179,7 +179,7 @@
 	</div> <!-- .postbox -->
 
 	<div  class="postbox event-active-status-option event-cancelled-emails" id="em-opt-event-submission-emails" >
-		<div class="handlediv"><br /></div><h3><span><?php _e ( 'Event Cancellation', 'events-manager'); ?> </span></h3>
+		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Event Cancellation', 'events-manager'); ?> </span></h3>
 		<div class="inside">
 			<table class='form-table'>
 				<tr class="em-subheader"><td colspan='2'>
