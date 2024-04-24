@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name:    Events Manager (ICTU WP corrections: 7.0.0 == 6.4.7.3)
-Version: 6.4.7.3-gc.1
+Version: 7.0.0
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite

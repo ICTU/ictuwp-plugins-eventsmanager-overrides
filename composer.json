@@ -2,5 +2,5 @@
   "name": "ictu/eventsmanager-overrides",
   "description": "Events Manager (ICTU WP corrections)",
   "type": "wordpress-plugin",
-  "version": "6.4.7.3-gc.1"
+  "version": "7.0.0"
 }
