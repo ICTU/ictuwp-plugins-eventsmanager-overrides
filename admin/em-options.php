@@ -1061,7 +1061,20 @@ function em_admin_option_box_data_privacy(){
                 	1 => __('Remember and hide checkbox', 'events-manager'),
 	                2 => __('Remember and show checkbox', 'events-manager')
                 );
-                em_options_input_text( __('Consent Text', 'events-manager'), 'dbem_data_privacy_consent_text', __('%s will be replaced by a link to your site privacy policy page.', 'events-manager') );
+
+                // extra GC fields for the consent form
+                $dbem_data_privacy_indicator_required = _x( 'Verplicht', 'EM privacy permission', 'events-manager' );
+                em_options_input_text( __('indicator voor "verplicht"', 'events-manager'), 'dbem_data_privacy_indicator_required', __('tekst naast de asterisk', 'events-manager'), $dbem_data_privacy_indicator_required );
+
+                $dbem_data_privacy_title = _x( 'Toestemming', 'EM privacy permission', 'events-manager' );
+                em_options_input_text( __('Titel', 'events-manager'), 'dbem_data_privacy_title', __('Titel boven de toestemingstekst', 'events-manager'), $dbem_data_privacy_title );
+
+                $dbem_data_privacy_description_default = _x( 'We gebruiken je gegevens alleen waarvoor je ze aan ons hebt doorgegeven. Zie ook onze <a href="%s" target="_blank" rel="privacy-policy">privacyverklaring (opent in een nieuw venster)</a>. Verder verwachten we dat je als deelnemer van onze bijeenkomst je houdt aan <a href="https://www.gebruikercentraal.nl/gedragsregels/" target="_blank">onze gedragsregels (opent in een nieuw venster)</a>. Als je op de knop hieronder drukt, dan ga je daarmee akkoord.', 'EM privacy permission', 'events-manager' );
+                em_options_input_text( __('Volledige tekst met links', 'events-manager'), 'dbem_data_privacy_description', __('HTML is oke. %$ wordt vervangen door de link naar je privacypagina', 'events-manager'), $dbem_data_privacy_description_default );
+
+                $dbem_data_privacy_checkbox_label_default = _x( 'Ik geef toestemming', 'EM privacy permission', 'events-manager' );
+                em_options_input_text( __('Label bij checkbox', 'events-manager'), 'dbem_data_privacy_checkbox_label', __('Dit label staat naast de checkbox', 'events-manager'), $dbem_data_privacy_checkbox_label_default );
+
                 em_options_select( __('Remembering Consent', 'events-manager'), 'dbem_data_privacy_consent_remember', $consent_remember, __('You can hide or leave the consent box checked for registered users who have provided consent previously.', 'events-manager') );
                 em_options_select( __( 'Event Submission Forms', 'events-manager'), 'dbem_data_privacy_consent_events', $privacy_options );
                 em_options_select( __( 'Location Submission Forms', 'events-manager'), 'dbem_data_privacy_consent_locations', $privacy_options );

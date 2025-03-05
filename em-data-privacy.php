@@ -6,13 +6,16 @@
 function em_data_privacy_consent_checkbox( $EM_Object = false ){
 	if( !empty($EM_Object) && (!empty($EM_Object->booking_id) || !empty($EM_Object->post_id)) ) return; //already saved so consent was given at one point
 	if( !doing_action('em_booking_form_after_user_details') && did_action('em_booking_form_after_user_details') ) return; // backcompat
-	$label = get_option('dbem_data_privacy_consent_text');
-	// buddyboss fix since bb v1.6.0
-	if( has_filter( 'the_privacy_policy_link', 'bp_core_change_privacy_policy_link_on_private_network') ) $bb_fix = remove_filter('the_privacy_policy_link', 'bp_core_change_privacy_policy_link_on_private_network', 999999);
-	// replace privacy policy text %s with link to policy page
-	if( function_exists('get_the_privacy_policy_link') ) $label = sprintf($label, get_the_privacy_policy_link());
-	// buddyboss unfix since bb v1.6.0
-	if( !empty($bb_fix) ) add_filter( 'the_privacy_policy_link', 'bp_core_change_privacy_policy_link_on_private_network', 999999, 2 );
+	$dbem_data_privacy_indicator_required = get_option( 'dbem_data_privacy_indicator_required', 'Verplicht' );
+	$dbem_data_privacy_title              = get_option( 'dbem_data_privacy_title', 'Toestemming' );
+	$dbem_data_privacy_description        = get_option( 'dbem_data_privacy_description', 'We gebruiken je gegevens alleen waarvoor je ze aan ons hebt doorgegeven. Zie ook onze <a href="%s" target="_blank" rel="privacy-policy">privacyverklaring (opent in een nieuw venster)</a>. Verder verwachten we dat je als deelnemer van onze bijeenkomst je houdt aan <a href="https://www.gebruikercentraal.nl/gedragsregels/" target="_blank">onze gedragsregels (opent in een nieuw venster)</a>. Als je op de knop hieronder drukt, dan ga je daarmee akkoord.' );
+	$dbem_data_privacy_checkbox_label     = get_option( 'dbem_data_privacy_checkbox_label', 'Ik geef toestemming' );
+
+	// replace privacy policy URL %s with link to policy page
+	if ( function_exists( 'get_privacy_policy_url' ) ) {
+		$dbem_data_privacy_description = sprintf( $dbem_data_privacy_description, get_privacy_policy_url() );
+	}
+
 	// check if consent was previously given and check box if true
 	if( is_user_logged_in() ){
         $consent_given_already = get_user_meta( get_current_user_id(), 'em_data_privacy_consent', true );
@@ -27,38 +30,15 @@ function em_data_privacy_consent_checkbox( $EM_Object = false ){
 			<span class="form__label__content">
 			<?php echo sprintf(
 				'%s <span class="form__required-asterisk">* <span class="visually-hidden">%s</span></span></label>',
-				_x( 'Toestemming', 'Required fields: required consent', 'gctheme' ),
-				_x( 'Verplicht', 'Required fields: required text', 'gctheme' ),
+				$dbem_data_privacy_title,
+				$dbem_data_privacy_indicator_required,
 			);?>
 			</span>
 		</legend>
-		<?php
-		// Output a link to the privacy page, if available.
-		// Note: Simplest is get_the_privacy_policy_link(), which returns full hyperlink markup.
-		// However, we use: get_privacy_policy_url() (URL only, no markup)
-		// to be able to construct complete custom output
-		// (as per: https://documentatie.vercel.app/richtlijnen/formulieren/links#groeperen-met-een-fieldset-en-de-informatie-koppelen-aan-het-formulierveld-met-een-aria-describedby.)
-		$pp_link_url   = get_privacy_policy_url();
-		$pp_link_descr = _x( 'Wij hebben jouw toestemming nodig om enkele gegevens op te slaan. Lees onze %s.', 'Privacy policy link: description', 'gctheme' );
-		$pp_link_title = _x( 'privacyverklaring (opent in een nieuw venster)', 'Privacy policy link: title', 'gctheme' );
-
-		if ( $pp_link_url && $pp_link_title ) {
-			// Construct custom privacy policy link output
-			$pp_link = sprintf(
-				'<a class="privacy-policy-link" href="%s" rel="privacy-policy" target="_blank">%s</a>',
-				esc_url( $pp_link_url ),
-				esc_html( $pp_link_title ),
-			);
-		}
-		if ( $pp_link && $pp_link_descr ) {
-			// Construct custom privacy policy paragraph
-			$pp_link_descr = sprintf( $pp_link_descr, $pp_link );
-			echo sprintf( '<p id="pp-info" class="privacy-policy-link-info">%s</p>', $pp_link_descr );
-		}
-		?>
+        <p id="pp-info" class="privacy-policy-link-info"><?php echo $dbem_data_privacy_description  ?></p>
 		<label class="form__label" for="data_privacy_consent">
 			<input aria-describedby="pp-info data_privacy_consent_error" type="checkbox" id="data_privacy_consent" name="data_privacy_consent" value="1" <?php if( !empty($checked) ) echo 'checked="checked"'; ?>>
-			<?php echo $label; ?>
+			<?php echo $dbem_data_privacy_checkbox_label; ?>
 		</label>
 	</fieldset>
 	<?php
