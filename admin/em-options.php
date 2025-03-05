@@ -1070,7 +1070,7 @@ function em_admin_option_box_data_privacy(){
                 em_options_input_text( __('Titel', 'events-manager'), 'dbem_data_privacy_title', __('Titel boven de toestemingstekst', 'events-manager'), $dbem_data_privacy_title );
 
                 $dbem_data_privacy_description_default = _x( 'We gebruiken je gegevens alleen waarvoor je ze aan ons hebt doorgegeven. Zie ook onze <a href="%s" target="_blank" rel="privacy-policy">privacyverklaring (opent in een nieuw venster)</a>. Verder verwachten we dat je als deelnemer van onze bijeenkomst je houdt aan <a href="https://www.gebruikercentraal.nl/gedragsregels/" target="_blank">onze gedragsregels (opent in een nieuw venster)</a>. Als je op de knop hieronder drukt, dan ga je daarmee akkoord.', 'EM privacy permission', 'events-manager' );
-                em_options_input_text( __('Volledige tekst met links', 'events-manager'), 'dbem_data_privacy_description', __('HTML is oke. %$ wordt vervangen door de link naar je privacypagina', 'events-manager'), $dbem_data_privacy_description_default );
+                em_options_input_text( __('Volledige tekst met links', 'events-manager'), 'dbem_data_privacy_description', __('HTML is oke. %s wordt vervangen door de link naar je privacypagina', 'events-manager'), $dbem_data_privacy_description_default );
 
                 $dbem_data_privacy_checkbox_label_default = _x( 'Ik geef toestemming', 'EM privacy permission', 'events-manager' );
                 em_options_input_text( __('Label bij checkbox', 'events-manager'), 'dbem_data_privacy_checkbox_label', __('Dit label staat naast de checkbox', 'events-manager'), $dbem_data_privacy_checkbox_label_default );
