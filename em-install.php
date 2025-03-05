@@ -900,7 +900,10 @@ function em_add_options() {
 	    'dbem_events_page_ajax' => 0,
 	    'dbem_conditional_recursions' => 2,
         //data privacy/protection
-        'dbem_data_privacy_consent_text' => esc_html__('I consent to my submitted data being collected and stored as outlined by the site %s.','events-manager'),
+		'dbem_data_privacy_indicator_required' => esc_html__('Toestemming','events-manager'),
+		'dbem_data_privacy_title' => esc_html__('Verplicht','events-manager'),
+        'dbem_data_privacy_description' => esc_html__('We gebruiken je gegevens alleen waarvoor je ze aan ons hebt doorgegeven. Zie ook onze <a href="%s" target="_blank" rel="privacy-policy">privacyverklaring (opent in een nieuw venster)</a>. Verder verwachten we dat je als deelnemer van onze bijeenkomst je houdt aan <a href="https://www.gebruikercentraal.nl/gedragsregels/" target="_blank">onze gedragsregels (opent in een nieuw venster)</a>. Als je op de knop hieronder drukt, dan ga je daarmee akkoord.','events-manager'),
+		'dbem_data_privacy_checkbox_label' => esc_html__('Ik geef toestemming','events-manager'),
         'dbem_data_privacy_consent_remember' => 1,
 		'dbem_data_privacy_consent_events' => 1,
 		'dbem_data_privacy_consent_locations' => 1,

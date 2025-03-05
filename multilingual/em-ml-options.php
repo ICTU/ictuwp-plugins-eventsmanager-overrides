@@ -14,7 +14,10 @@ class EM_ML_Options {
 				'dbem_events_form_result_success',
 				'dbem_events_form_result_success_updated',
 				//privacy policy consent
-				'dbem_data_privacy_consent_text',
+				'dbem_data_privacy_indicator_required',
+				'dbem_data_privacy_title',
+				'dbem_data_privacy_description',
+				'dbem_data_privacy_checkbox_label',
 			//FORMATTING TAB
 				//events
 				'dbem_event_list_groupby_format',
